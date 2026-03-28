@@ -378,6 +378,8 @@
             generating = true;
 
             const mid = 'm_' + Date.now();
+            chatContainer.classList.remove('hidden');
+            chatContainer.classList.add('block');
             addMsg('ai', '<div class="typing"><span class="inline-block w-2 h-2 bg-gray-400 rounded-full"></span><span class="inline-block w-2 h-2 bg-gray-400 rounded-full mx-1"></span><span class="inline-block w-2 h-2 bg-gray-400 rounded-full"></span></div>', mid);
             scroll();
 
@@ -390,17 +392,21 @@
                 const data = await res.json();
                 const el = document.getElementById(mid);
                 
-                if (data.reply) {
-                    el.innerHTML = format(data.reply);
-                    history.push({ role: 'assistant', content: data.reply });
-                    save();
-                    renderChats();
-                } else {
-                    el.innerHTML = `<p class="text-red-500 text-sm">${data.error || 'Hata oluştu'}</p>`;
+                if (el) {
+                    if (data.reply) {
+                        el.innerHTML = format(data.reply);
+                        history.push({ role: 'assistant', content: data.reply });
+                        save();
+                        renderChats();
+                    } else {
+                        el.innerHTML = `<p class="text-red-500 text-sm">${data.error || 'Hata oluştu'}</p>`;
+                    }
                 }
             } catch {
                 const el = document.getElementById(mid);
-                el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası</p>';
+                if (el) {
+                    el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası</p>';
+                }
             }
 
             generating = false;
