@@ -342,7 +342,6 @@
             generating = true;
 
             const mid = 'm_' + Date.now();
-            const searchIndicator = searchEnabled ? '<div class="flex items-center gap-2 text-xs text-green-600 dark:text-green-400 mb-2"><i data-lucide="globe" class="w-3 h-3"></i>🌐 Web araştırılıyor...</div>' : '';
             addMsg('ai', '<div class="typing"><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full mx-1"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span></div>', mid);
             scroll();
 
@@ -357,8 +356,7 @@
                 
                 if (el) {
                     if (data.reply) {
-                        const indicator = searchEnabled ? '<div class="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 mb-3 pb-2 border-b border-gray-100 dark:border-gray-700"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Web araştırması tamamlandı</div>' : '';
-                        el.innerHTML = indicator + format(data.reply);
+                        el.innerHTML = format(data.reply);
                         history.push({ role: 'assistant', content: data.reply });
                         save();
                         renderChats();
