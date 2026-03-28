@@ -384,12 +384,14 @@
             scroll();
 
             try {
+                console.log('Sending request to /api/chat...');
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text, history, autoThink: think })
                 });
                 const data = await res.json();
+                console.log('Response:', data);
                 const el = document.getElementById(mid);
                 
                 if (el) {
@@ -402,11 +404,12 @@
                         el.innerHTML = `<p class="text-red-500 text-sm">${data.error || 'Hata oluştu'}</p>`;
                     }
                 }
-            } catch {
+            } catch (err) {
                 const el = document.getElementById(mid);
                 if (el) {
-                    el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası</p>';
+                    el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası: ' + (err.message || 'Bilinmeyen hata') + '</p>';
                 }
+                console.error('Fetch error:', err);
             }
 
             generating = false;
