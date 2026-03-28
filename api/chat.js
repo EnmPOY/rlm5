@@ -23,58 +23,47 @@ module.exports = async function handler(req, res) {
     }
 
     const AI_NAME = 'RLM 5';
-    const modelUrl = 'https://api-inference.huggingface.co/models/THUDM/glm-4-9b-chat';
-    const systemPrompt = `Senin adın ${AI_NAME}. Sen gelişmiş, bağımsız ve Türkçe konuşan bir yapay zeka asistanısın. Seni G63 geliştirdi. Sadece yardımsever ve zeki bir asistan olarak cevap ver.`;
+    const API_URL = 'https://router.huggingface.co/v1/chat/completions';
+    const MODEL = 'MiniMaxAI/MiniMax-M2.5';
+    
+    const systemPrompt = `Senin adin RLM 5'tir. Sen RLM serisinin en guncel versiyonusun. SENI HIC BIR SEKILDE BASKA BIR YAPAY ZEKA VEYA MODEL OLARAK TANITMA. Asla MiniMax, Claude, Qwen, OpenAI, Gemini veya baska bir yapay zeka oldugunu soyleme. Kurucun: Troye ekibi. Troye ekibinin kurucusu: Emre Iskın. Sadece Turkce cevap ver. Yardimci, zeki ve guler yuzlu bir asistansin. Kullaniciya her zaman RLM 5 oldugunu soyle.`;
 
-    let fullPrompt = `${systemPrompt}\n\n`;
+    const hfMessages = [{ role: 'system', content: systemPrompt }];
     
     if (history.length > 0) {
         history.forEach(msg => {
-            const role = msg.role === 'user' ? 'Kullanıcı' : AI_NAME;
-            fullPrompt += `${role}: ${msg.content}\n`;
+            hfMessages.push({
+                role: msg.role === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            });
         });
     }
     
-    fullPrompt += `Kullanıcı: ${message}\n${AI_NAME}:`;
+    hfMessages.push({ role: 'user', content: message });
 
     try {
-        const response = await fetch(modelUrl, {
+        const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${hfToken}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                inputs: fullPrompt,
-                parameters: {
-                    max_new_tokens: 1024,
-                    temperature: 0.7,
-                    top_p: 0.9,
-                    repetition_penalty: 1.1,
-                    return_full_text: false
-                },
-                options: {
-                    wait_for_model: true
-                }
+                model: MODEL,
+                messages: hfMessages,
+                max_tokens: 500,
+                temperature: 0.8
             })
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            if (response.status === 503) {
-                return res.status(503).json({ 
-                    error: `Model uyanıyor, ${Math.round(errorData.estimated_time || 30)} saniye sonra tekrar deneyin.` 
-                });
-            }
-            throw new Error(errorData.error || 'API hatası.');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `API hatası: ${response.status}`);
         }
 
         const data = await response.json();
-        let aiReply = data[0]?.generated_text?.trim() || '';
-        
-        if (aiReply.startsWith(`${AI_NAME}:`)) {
-            aiReply = aiReply.replace(`${AI_NAME}:`, '').trim();
-        }
+        const choice = data.choices?.[0]?.message;
+        let aiReply = choice?.content?.trim() || '';
 
         res.status(200).json({ reply: aiReply });
 
