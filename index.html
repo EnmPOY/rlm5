@@ -420,8 +420,9 @@
         }
 
         // Add Message
-        function addMsg(role, content, animate = true) {
+        function addMsg(role, content, id = null, animate = true) {
             const div = document.createElement('div');
+            if (id) div.id = id;
             div.className = role === 'user' ? 'flex justify-end msg-user' : 'flex justify-start msg-ai';
             
             const bubble = document.createElement('div');
