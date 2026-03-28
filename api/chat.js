@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
                 analysisResults.push(result);
             }
             if (analysisResults.length > 0) {
-                userMessage = `WEB SİTE ANALİZİ:\n\n${analysisResults.join('\n\n---\n\n')}\n\nKULLANICI SORUSU:\n${message}\n\nYukarıdaki web sitesi analizine dayanarak kapsamlı ve detaylı bir cevap ver.`;
+                userMessage = `WEB SITE ANALIZI:\n\n${analysisResults.join('\n\n---\n\n')}\n\nSORU:\n${message}\n\nYukaridaki site analizlerine gore kapsamli yanit ver.`;
             }
         } catch (err) {
             console.error('Website analysis error:', err);
@@ -51,16 +51,34 @@ module.exports = async function handler(req, res) {
             userMessage = researchReport;
         } catch (err) {
             console.error('Research Error:', err);
-            userMessage = `Araştırma yapılamadı: ${err.message}\n\nSoru: ${message}`;
+            userMessage = `Araştırma hatasi: ${err.message}\n\nSoru: ${message}`;
         }
     }
 
-    const systemPrompt = `Sen RLM 5'sin. Turkiye'de gelistirilmis gelismis bir yapay zeka asistansin. Turkce konus. Kullaniciya RLM 5 oldugunu soyle, kurucu bilgisi sorulursa Troye ekibi de. Kendini AI model, MiniMax, Claude, Qwen vb. olarak tanitma. Sik, faydali ve dogru cevaplar ver. Verilen arastirma sonuclarini ve site analizlerini kullanarak kullaniciya net ve anlasilir bir yanit ver. Gereksiz yazi yazma, sonuclari oldugu gibi sun.`;
+    const systemPrompt = search || isDeepResearch 
+        ? `Sen RLM 5'sin. Turkiye'de gelistirilmis gelismis bir yapay zeka asistansin. Turkce konus. Kullaniciya RLM 5 oldugunu soyle, kurucu bilgisi sorulursa Troye ekibi de. Kendini AI model, MiniMax, Claude, Qwen vb. olarak tanitma.
+
+ARASTIRMA KURALLARI:
+1. Verilen web arama sonuclarini ve site iceriklerini dikkatlice incele
+2. Tum bilgileri birlestir, tutarsizlik varsa belirt
+3. Net, anlasilir ve detayli bir rapor hazirla
+4. Kaynaklari belirt (hangı siteden hangı bigi alındıysa)
+5. Gereksiz yazi yazma, direkt sonuca git
+6. Madde madde veya duzenlı sekilde sun
+7. Eger bilgi yetersızse, bunu belirt
+
+Yanitini su sekilde ver:
+- Konunun ne oldugu
+- Bulunan ana bilgiler (site bazli)
+- Sonuc ve degerlendirme
+- Kaynaklar`
+        : `Sen RLM 5'sin. Turkiye'de gelistirilmis gelismis bir yapay zeka asistansin. Turkce konus. Kullaniciya RLM 5 oldugunu soyle, kurucu bilgisi sorulursa Troye ekibi de. Sik, faydali ve dogru cevaplar ver.`;
 
     const hfMessages = [{ role: 'system', content: systemPrompt }];
     
     if (history.length > 0) {
-        history.forEach(msg => {
+        const recentHistory = history.slice(-6);
+        recentHistory.forEach(msg => {
             hfMessages.push({
                 role: msg.role === 'user' ? 'user' : 'assistant',
                 content: msg.content
@@ -105,26 +123,164 @@ module.exports = async function handler(req, res) {
 };
 
 async function doDeepResearch(query) {
-    const searchResults = await searchDuckDuckGo(query);
+    console.log('Starting deep research for:', query);
     
-    let report = `ARAŞTIRMA SONUÇLARI:\n`;
-    report += `Konu: ${query}\n\n`;
+    const allResults = [];
     
-    for (const site of searchResults.results.slice(0, 8)) {
-        try {
-            const analysis = await analyzeWebsite(site.url);
-            report += `[${site.title}]\n${analysis}\n\n`;
-        } catch (err) {
-            report += `[${site.title}]\nSiteye erişilemedi\n\n`;
+    const ddgResults = await searchDuckDuckGo(query);
+    allResults.push(...ddgResults);
+    
+    const startpageResults = await searchStartpage(query);
+    allResults.push(...startpageResults);
+    
+    const bingResults = await searchBing(query);
+    allResults.push(...bingResults);
+    
+    const uniqueUrls = new Map();
+    allResults.forEach(r => {
+        if (!uniqueUrls.has(r.url) && isValidUrl(r.url)) {
+            uniqueUrls.set(r.url, r);
         }
+    });
+    
+    const topSites = Array.from(uniqueUrls.values()).slice(0, 8);
+    
+    console.log(`Found ${topSites.length} unique sites to analyze`);
+    
+    let report = `ARASTIRMA RAPORU\n`;
+    report += `Konu: ${query}\n`;
+    report += `Bulunan kaynak: ${topSites.length} site\n\n`;
+    report += `═══════════════════════════════════════\n\n`;
+    
+    for (let i = 0; i < topSites.length; i++) {
+        const site = topSites[i];
+        report += `[${i + 1}] ${site.title}\n`;
+        report += `Kaynak: ${site.url}\n`;
+        
+        if (site.snippet) {
+            report += `Ozet: ${site.snippet}\n`;
+        }
+        
+        try {
+            const analysis = await analyzeWebsiteContent(site.url);
+            report += `Icerik:\n${analysis}\n`;
+        } catch (err) {
+            report += `Icerik: Alinamadi\n`;
+        }
+        
+        report += `\n═══════════════════════════════════════\n\n`;
     }
-
-    report += `\nŞimdi bu araştırma sonuçlarına dayanarak soruya yanıt ver.`;
+    
+    report += `YUKARIDAKI ${topSites.length} SİTENİN ANALİZİNE GÖRE DETAYLI BİR RAPOR HAZIRLA.`;
     
     return report;
 }
 
-async function analyzeWebsite(url) {
+function isValidUrl(url) {
+    if (!url) return false;
+    if (url.includes('duckduckgo.com/')) return false;
+    if (url.includes('yahoo.com/')) return false;
+    if (url.includes('bing.com/')) return false;
+    if (url.includes('google.com/search')) return false;
+    if (url.includes('facebook.com/')) return false;
+    if (url.includes('twitter.com/')) return false;
+    if (url.includes('instagram.com/')) return false;
+    if (url.length < 20) return false;
+    return true;
+}
+
+async function searchDuckDuckGo(query) {
+    const results = [];
+    const encodedQuery = encodeURIComponent(query);
+    
+    try {
+        const htmlUrl = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}&kl=tr-tr`;
+        const htmlResponse = await fetch(htmlUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        const html = await htmlResponse.text();
+        
+        const linkRegex = /<a class="result-link"[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi;
+        let match;
+        while ((match = linkRegex.exec(html)) !== null && results.length < 5) {
+            const url = match[1];
+            const title = decodeHtml(match[2].trim());
+            if (isValidUrl(url)) {
+                const snippetMatch = html.substring(match.index, match.index + 500).match(/<span class="result-snippet">([^<]*(?:<[^>]*>[^<]*)*)<\/span>/i);
+                const snippet = snippetMatch ? decodeHtml(snippetMatch[1].replace(/<[^>]*>/g, '')).substring(0, 300) : '';
+                results.push({ title, url, snippet, source: 'DuckDuckGo' });
+            }
+        }
+    } catch (e) {
+        console.log('DuckDuckGo error:', e.message);
+    }
+    
+    return results;
+}
+
+async function searchStartpage(query) {
+    const results = [];
+    const encodedQuery = encodeURIComponent(query);
+    
+    try {
+        const htmlUrl = `https://www.startpage.com/do/search?cmd=process_search&query=${encodedQuery}&language=turkish`;
+        const htmlResponse = await fetch(htmlUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        const html = await htmlResponse.text();
+        
+        const linkRegex = /<a[^>]*class="[^"]*result[^"]*"[^>]*href="([^"]*)"[^>]*>\s*<span[^>]*class="[^"]*title[^"]*"[^>]*>([^<]*)<\/span>/gi;
+        let match;
+        while ((match = linkRegex.exec(html)) !== null && results.length < 4) {
+            const url = match[1];
+            const title = decodeHtml(match[2].trim());
+            if (isValidUrl(url)) {
+                results.push({ title, url, snippet: '', source: 'Startpage' });
+            }
+        }
+    } catch (e) {
+        console.log('Startpage error:', e.message);
+    }
+    
+    return results;
+}
+
+async function searchBing(query) {
+    const results = [];
+    const encodedQuery = encodeURIComponent(query);
+    
+    try {
+        const htmlUrl = `https://cc.bingj.com/cache.aspx?q=${encodedQuery}&d=0&mkt=tr-TR&setlang=tr-TR&w=`;
+        const htmlResponse = await fetch(htmlUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+        const html = await htmlResponse.text();
+        
+        const linkRegex = /<a[^>]*href="(https?:\/\/(?!cc\.bingj\.com|cache\.)[^"]+)"[^>]*class="[^"]*b_title[^"]*"[^>]*>([^<]*)<\/a>/gi;
+        let match;
+        while ((match = linkRegex.exec(html)) !== null && results.length < 4) {
+            const url = match[1];
+            const title = decodeHtml(match[2].trim());
+            if (isValidUrl(url)) {
+                const snippetMatch = html.substring(match.index, match.index + 1000).match(/class="b_paractl"[^>]*>([^<]*(?:<[^>]*>[^<]*)*)<\/p>/i);
+                const snippet = snippetMatch ? decodeHtml(snippetMatch[1].replace(/<[^>]*>/g, '')).substring(0, 300) : '';
+                results.push({ title, url, snippet, source: 'Bing' });
+            }
+        }
+    } catch (e) {
+        console.log('Bing error:', e.message);
+    }
+    
+    return results;
+}
+
+async function analyzeWebsiteContent(url) {
     try {
         const cleanUrl = url.replace(/[)]$/, '');
         
@@ -133,108 +289,101 @@ async function analyzeWebsite(url) {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
                 'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8'
-            }
+            },
+            signal: AbortSignal.timeout(10000)
         });
 
         if (!response.ok) {
-            return `Erişilemedi (${response.status})`;
+            return 'Siteye erisilemedi';
         }
 
         const html = await response.text();
         
-        const title = extractTag(html, /<title[^>]*>([^<]*)<\/title>/i) || 'Başlık yok';
-        const description = extractTag(html, /<meta[^>]*name="description"[^>]*content="([^"]*)"/i) || '';
+        const title = extractMeta(html, /<title[^>]*>([^<]*)<\/title>/i) || 'Baslik yok';
         
-        const h1Tags = html.match(/<h1[^>]*>([^<]*)<\/h1>/gi) || [];
-        const h1s = h1Tags.map(h => h.replace(/<[^>]*>/g, '').trim()).filter(h => h.length > 0);
+        const description = extractMeta(html, /<meta[^>]*name="description"[^>]*content="([^"]*)"/i) ||
+                          extractMeta(html, /<meta[^>]*property="og:description"[^>]*content="([^"]*)"/i) || '';
         
-        const textContent = html
-            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-            .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-            .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-            .replace(/<[^>]+>/g, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+        const articleContent = extractArticleContent(html);
         
-        const mainContent = textContent.substring(0, 2000);
+        const h1s = [...html.matchAll(/<h1[^>]*>([^<]*)<\/h1>/gi)].map(m => decodeHtml(m[1]).trim()).filter(h => h.length > 0);
+        const h2s = [...html.matchAll(/<h2[^>]*>([^<]*)<\/h2>/gi)].map(m => decodeHtml(m[1]).trim()).filter(h => h.length > 0).slice(0, 5);
         
-        let analysis = `Başlık: ${title}\n`;
-        if (description) analysis += `Açıklama: ${description}\n`;
-        if (h1s.length > 0) analysis += `Başlıklar: ${h1s.slice(0, 3).join(', ')}\n`;
-        analysis += `İçerik: ${mainContent}`;
+        let content = `Baslik: ${title}\n`;
+        if (description) content += `Aciklama: ${description}\n`;
+        if (h1s.length > 0) content += `Basliklar: ${h1s.join(', ')}\n`;
+        if (articleContent) {
+            content += `\nICERIK:\n${articleContent}`;
+        } else {
+            const mainText = extractMainText(html);
+            content += `\nICERIK:\n${mainText}`;
+        }
         
-        return analysis;
+        return content.substring(0, 2500);
 
     } catch (err) {
         return `Hata: ${err.message}`;
     }
 }
 
-function extractTag(html, regex) {
+function extractArticleContent(html) {
+    const articlePatterns = [
+        /<article[^>]*>([\s\S]*?)<\/article>/gi,
+        /<main[^>]*>([\s\S]*?)<\/main>/gi,
+        /<div[^>]*class="[^"]*(?:content|article|post|entry|text|body)[^"]*"[^>]*>([\s\S]*?)<\/div>/gi
+    ];
+    
+    for (const pattern of articlePatterns) {
+        const matches = [...html.matchAll(pattern)];
+        if (matches.length > 0) {
+            for (const match of matches) {
+                const content = decodeHtml(match[1]
+                    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+                    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/\s+/g, ' ')
+                    .trim());
+                
+                if (content.length > 200) {
+                    return content.substring(0, 2000);
+                }
+            }
+        }
+    }
+    
+    return '';
+}
+
+function extractMainText(html) {
+    return html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
+        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
+        .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
+        .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .substring(0, 2000);
+}
+
+function extractMeta(html, regex) {
     const match = html.match(regex);
     if (match && match[1]) {
-        return decodeHtmlEntities(match[1].trim());
+        return decodeHtml(match[1].trim());
     }
     return null;
 }
 
-function decodeHtmlEntities(text) {
+function decodeHtml(text) {
     return text
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'")
-        .replace(/&nbsp;/g, ' ');
-}
-
-async function searchDuckDuckGo(query) {
-    const encodedQuery = encodeURIComponent(query);
-    
-    const results = [];
-
-    try {
-        const htmlUrl = `https://lite.duckduckgo.com/lite/?q=${encodedQuery}&kl=tr-tr`;
-        const htmlResponse = await fetch(htmlUrl);
-        const html = await htmlResponse.text();
-        
-        const linkRegex = /<a class="result-link"[^>]*href="([^"]*)"[^>]*>([^<]*)<\/a>/gi;
-        const linkMatches = [...html.matchAll(linkRegex)];
-        
-        const snippetRegex = /<span class="result-snippet">[^<]*(?:<[^>]*>[^<]*)*<\/span>/gi;
-        const snippetMatches = [...html.matchAll(snippetRegex)];
-        
-        const seenUrls = new Set();
-        
-        for (let i = 0; i < Math.min(linkMatches.length, 10); i++) {
-            const url = linkMatches[i][1];
-            const title = decodeHtmlEntities(linkMatches[i][2].trim());
-            
-            if (seenUrls.has(url)) continue;
-            if (url.includes('duckduckgo.com') || url.includes('yahoo.com') || url.includes('bing.com')) continue;
-            
-            seenUrls.add(url);
-            
-            let snippet = '';
-            if (snippetMatches[i]) {
-                snippet = snippetMatches[i][0]
-                    .replace(/<[^>]*>/g, '')
-                    .replace(/&amp;/g, '&')
-                    .replace(/&lt;/g, '<')
-                    .replace(/&gt;/g, '>')
-                    .trim();
-            }
-            
-            results.push({
-                title: title || 'Başlık yok',
-                url: url,
-                snippet: snippet || ''
-            });
-        }
-    } catch (e) {
-        console.log('Search error:', e.message);
-    }
-
-    return { results };
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&#(\d+);/g, (_, num) => String.fromCharCode(num))
+        .trim();
 }
