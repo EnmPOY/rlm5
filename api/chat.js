@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ error: 'Sadece POST istekleri kabul edilir.' });
     }
 
-    const { message, history = [], search = false } = req.body;
+    const { message, history = [], search = false, imageUrls = [] } = req.body;
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
@@ -28,16 +28,31 @@ module.exports = async function handler(req, res) {
     const urlRegex = /https?:\/\/[^\s]+/gi;
     const urls = message.match(urlRegex);
 
+    // Resim URL'lerini tespit et (mesaj icinde veya ayri alandan)
+    const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|tiff)(\?[^"'\s]*)?$/i;
+    const messageImageUrls = (urls || []).filter(url => imageExtensions.test(url));
+    const allImageUrls = [...new Set([...messageImageUrls, ...(imageUrls || [])])];
+    
     let userMessage = message;
     let isDeepResearch = false;
+    let imageAnalysis = null;
 
-    if (urls && urls.length > 0) {
+    // RESIM ANALIZI
+    if (allImageUrls.length > 0) {
+        console.log('RESIM ANALIZI:', allImageUrls.length, 'resim tespit edildi');
+        imageAnalysis = await analyzeImages(allImageUrls);
+        userMessage = `${imageAnalysis}\n\nKULLANICI MESAJI: ${message}`;
+    }
+    // SITE ANALIZI
+    else if (urls && urls.length > 0) {
         let report = '';
         for (const url of urls.slice(0, 3)) {
             report += await analyzeWebsite(url) + '\n\n';
         }
         userMessage = report + '\nSORU: ' + message;
-    } else if (search) {
+    }
+    // DERIN ARASTIRMA
+    else if (search) {
         isDeepResearch = true;
         userMessage = await doDeepResearch(message);
     }
@@ -45,7 +60,7 @@ module.exports = async function handler(req, res) {
     const systemPrompt = isDeepResearch
         ? `Sen RLM 5'sin. Turkiye'nin en gelismis yapay zeka asistansin. Turkiye'de Troye ekibi tarafindan gelistirildin. Turkce konus.
 
-ASAGIDA KAPSAMLI ARASHTIRMA SON UCLARI VAR. BU VERILERI DIKKATLICE INCLE VE EN IYI YANITI VER.
+ASAGIDA KAPSAMLI ARASTIRMA SON UCLARI VAR. BU VERILERI DIKKATLICE INCLE VE EN IYI YANITI VER.
 
 Kurallar:
 1. Tum verileri birlestir
@@ -53,7 +68,7 @@ Kurallar:
 3. Detayli ve anlasilir yanit ver
 4. Bilgi yetersizse bunu belirt
 5. Sonuclari duzenli goster`
-        : `Sen RLM 5'sin. Turkiye'de gelistirilmis gelismis bir yapay zeka asistansin. Turkce konus. Kullaniciya RLM 5 oldugunu soyle, kurucu Troye ekibi. Sik, faydali ve dogru cevaplar ver.`;
+        : `Sen RLM 5'sin. Turkiye'de gelistirilmis gelismis bir yapay zeka asistansin. Turkce konus. Kullaniciya RLM 5 oldugunu soyle, kurucu Troye ekibi. Sik, faydali ve dogru cevaplar ver. Gorsel analizi yapabilirsin.`;
 
     const hfMessages = [{ role: 'system', content: systemPrompt }];
     
@@ -1145,6 +1160,116 @@ function detectTech(html) {
     if (/intercom/i.test(lower)) techs.push('Intercom');
     
     return [...new Set(techs)].slice(0, 12);
+}
+
+// ==================== RESIM ANALIZI ====================
+
+async function analyzeImages(imageUrls) {
+    console.log('RESIM ANALIZI BASLADI:', imageUrls.length);
+    
+    let report = '';
+    report += '\n========== RESIM ANALIZI ==========\n\n';
+    
+    for (let i = 0; i < Math.min(imageUrls.length, 5); i++) {
+        const imageUrl = imageUrls[i];
+        console.log('Resim indiriliyor:', imageUrl);
+        
+        try {
+            const imageData = await downloadImage(imageUrl);
+            
+            if (imageData) {
+                report += `--- RESIM ${i + 1} ---\n`;
+                report += `URL: ${imageUrl}\n`;
+                report += `Boyut: ${imageData.size}\n`;
+                report += `Tip: ${imageData.type}\n`;
+                report += `Genislik: ${imageData.width || 'Bilinmiyor'}\n`;
+                report += `Yukseklik: ${imageData.height || 'Bilinmiyor'}\n`;
+                
+                // Base64 kodlanmis goruntu (kucuk boyutluysa)
+                if (imageData.base64 && imageData.base64.length < 100000) {
+                    report += `\n[GORUNTU BILGISI]\n`;
+                    report += `Base64 uzunlugu: ${imageData.base64.length} karakter\n`;
+                    report += `\nAI'ya gonderilecek gorsel verisi hazir.\n`;
+                }
+                
+                report += '\n';
+            }
+        } catch (e) {
+            console.log('Resim indirme hatasi:', e.message);
+            report += `--- RESIM ${i + 1} ---\n`;
+            report += `URL: ${imageUrl}\n`;
+            report += `Durum: Indirilemedi (${e.message})\n\n`;
+        }
+    }
+    
+    report += '===================================\n';
+    report += '\nYukaridaki resimleri analiz et ve detayli bir rapor hazirla.\n';
+    report += '\nRESIM ANALIZ RAPORU:\n';
+    report += '- Resimde ne gorunuyor?\n';
+    report += '- Renkler ve tasarim nedir?\n';
+    report += '- Metin varsa ne yaziyo?\n';
+    report += '- Grafik veya diyagram ise neyi gosteriyor?\n';
+    report += '- Sonuç ve degerlendirme nedir?\n';
+    
+    return report;
+}
+
+async function downloadImage(url) {
+    try {
+        const response = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+                'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8'
+            },
+            signal: AbortSignal.timeout(15000)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const base64 = buffer.toString('base64');
+        
+        // Resim boyutunu al
+        let width = null;
+        let height = null;
+        
+        // PNG header
+        if (contentType.includes('png') && buffer.length > 24) {
+            width = buffer.readUInt32BE(16);
+            height = buffer.readUInt32BE(20);
+        }
+        // JPEG header
+        else if ((contentType.includes('jpeg') || contentType.includes('jpg')) && buffer.length > 2) {
+            // JPEG boyut okuma (basit)
+            width = 'JPEG (genislik tespit edilemedi)';
+            height = 'JPEG (yukseklik tespit edilemedi)';
+        }
+        
+        return {
+            base64: base64,
+            type: contentType,
+            size: formatBytes(buffer.length),
+            width: width,
+            height: height
+        };
+        
+    } catch (e) {
+        console.log('Resim indirme hatasi:', url, e.message);
+        return null;
+    }
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 // ==================== YARDIMCI FONKSIYONLAR ====================
