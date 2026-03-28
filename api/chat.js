@@ -513,21 +513,25 @@ async function searchYahoo(query) {
 
 // ==================== ICERIK CEKME ====================
 
+// ==================== GELISMIS ICERIK CEKME ====================
+
 async function getFullContent(url) {
     let html = '';
     let source = 'direct';
     
-    // 1. Direkt erisim
+    // 1. Direkt erisim - tum basliklarla
     try {
         const response = await fetch(url, {
             headers: getBrowserHeaders(),
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(12000)
         });
         
         if (response.ok) {
             html = await response.text();
         }
-    } catch (e) {}
+    } catch (e) {
+        console.log('Direkt erisim hatasi:', e.message);
+    }
     
     // 2. Google Cache
     if (!html || html.length < 500) {
@@ -548,7 +552,26 @@ async function getFullContent(url) {
         } catch (e) {}
     }
     
-    // 3. Wayback Machine
+    // 3. Bing Cache
+    if (!html || html.length < 500) {
+        try {
+            const cacheUrl = `https://cc.bingj.com/cache.aspx?q=${encodeURIComponent(url)}&d=0`;
+            const response = await fetch(cacheUrl, {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                signal: AbortSignal.timeout(8000)
+            });
+            
+            if (response.ok) {
+                const cacheHtml = await response.text();
+                if (cacheHtml.includes('<!DOCTYPE') || cacheHtml.includes('<html')) {
+                    html = cacheHtml;
+                    source = 'bing-cache';
+                }
+            }
+        } catch (e) {}
+    }
+    
+    // 4. Wayback Machine
     if (!html || html.length < 500) {
         try {
             const waybackUrl = `https://web.archive.org/web/2024/${url}`;
@@ -567,71 +590,371 @@ async function getFullContent(url) {
         } catch (e) {}
     }
     
+    // 5. Textise dot iitty
+    if (!html || html.length < 500) {
+        try {
+            const textiseUrl = `https://lite.textise.net/?url=${encodeURIComponent(url)}`;
+            const response = await fetch(textiseUrl, {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                signal: AbortSignal.timeout(6000)
+            });
+            
+            if (response.ok) {
+                const textHtml = await response.text();
+                if (textHtml.length > 200) {
+                    html = `<html><body><pre>${textHtml}</pre></body></html>`;
+                    source = 'textise';
+                }
+            }
+        } catch (e) {}
+    }
+    
     if (!html || html.length < 200) {
         return null;
     }
     
-    return extractContent(html, source);
+    return extractContentAdvanced(html, source, url);
 }
 
-function extractContent(html, source) {
-    const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || 
-                 html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i)?.[1] || '';
+function extractContentAdvanced(html, source, originalUrl) {
+    // Meta bilgileri cek
+    const title = extractMeta(html, 'title') || 
+                  extractMeta(html, 'og:title') || 
+                  extractMeta(html, 'twitter:title') || '';
     
-    const description = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i)?.[1] ||
-                       html.match(/<meta[^>]*property="og:description"[^>]*content="([^"]+)"/i)?.[1] || '';
+    const description = extractMeta(html, 'description') || 
+                       extractMeta(html, 'og:description') || 
+                       extractMeta(html, 'twitter:description') || '';
     
-    const h1s = [...html.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi)].map(m => cleanText(m[1]));
-    const h2s = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi)].map(m => cleanText(m[1])).slice(0, 5);
-    const h3s = [...html.matchAll(/<h3[^>]*>([^<]+)<\/h3>/gi)].map(m => cleanText(m[1])).slice(0, 5);
+    const author = extractMeta(html, 'author') || '';
+    const publishDate = extractMeta(html, 'article:published_time') || 
+                       extractMeta(html, 'date') || '';
     
-    let articleContent = '';
+    // Tum basliklari cek
+    const h1s = extractAllHeadings(html, 'h1');
+    const h2s = extractAllHeadings(html, 'h2');
+    const h3s = extractAllHeadings(html, 'h3');
+    const h4s = extractAllHeadings(html, 'h4');
     
-    const articlePatterns = [
-        /<article[^>]*>([\s\S]*?)<\/article>/i,
-        /<main[^>]*>([\s\S]*?)<\/main>/i,
-        /<div[^>]*class="[^"]*content[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-        /<div[^>]*class="[^"]*article[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-        /<div[^>]*class="[^"]*post[^"]*"[^>]*>([\s\S]*?)<\/div>/i,
-        /<div[^>]*class="[^"]*entry[^"]*"[^>]*>([\s\S]*?)<\/div>/i
-    ];
+    // Oncelikle ana icerigi bul
+    let mainContent = findMainContent(html);
     
-    for (const pattern of articlePatterns) {
-        const match = html.match(pattern);
-        if (match && match[1].length > articleContent.length) {
-            articleContent = match[1];
+    // Eger ana icerik cok kisa ise body kullan
+    if (mainContent.length < 500) {
+        const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+        if (bodyMatch) {
+            mainContent = cleanHTML(bodyMatch[1]);
         }
     }
     
-    if (!articleContent) {
-        const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-        articleContent = bodyMatch ? bodyMatch[1] : html;
+    // Paragraf ve listeleri cikar
+    const paragraphs = extractParagraphs(mainContent);
+    const lists = extractLists(mainContent);
+    
+    // Tablo iceriklerini cikar
+    const tables = extractTables(mainContent);
+    
+    // Kod bloklarini cikar (varsa)
+    const codeBlocks = extractCodeBlocks(mainContent);
+    
+    // Tum metni birlestir
+    let fullText = '';
+    
+    if (h1s.length > 0) {
+        fullText += `BASLIKLAR: ${h1s[0]}\n`;
+        if (h2s.length > 0) fullText += `Alt Basliklar: ${h2s.join(' > ')}\n`;
+        fullText += '\n';
     }
     
-    let text = articleContent
+    if (paragraphs.length > 0) {
+        fullText += 'ICERIK:\n';
+        paragraphs.forEach((p, i) => {
+            if (p.length > 20) {
+                fullText += `${i + 1}. ${p}\n\n`;
+            }
+        });
+    }
+    
+    if (lists.length > 0) {
+        fullText += '\nLISTELER:\n';
+        lists.forEach((l, i) => {
+            fullText += `${i + 1}. ${l}\n`;
+        });
+    }
+    
+    if (tables.length > 0) {
+        fullText += '\nTABLOLAR:\n';
+        tables.forEach(t => {
+            fullText += t + '\n';
+        });
+    }
+    
+    if (codeBlocks.length > 0) {
+        fullText += '\nKODLAR:\n';
+        codeBlocks.forEach(c => {
+            fullText += c + '\n';
+        });
+    }
+    
+    // Ek bilgiler
+    let extras = '';
+    
+    if (author) extras += `Yazar: ${author}\n`;
+    if (publishDate) extras += `Tarih: ${publishDate}\n`;
+    if (h4s.length > 0) extras += `Diger Basliklar: ${h4s.join(', ')}\n`;
+    
+    if (extras) {
+        fullText = '\nBILGILER:\n' + extras + '\n' + fullText;
+    }
+    
+    return {
+        title: cleanText(title),
+        description: cleanText(description),
+        headings: [...h1s, ...h2s, ...h3s].filter(h => h.length > 0),
+        text: fullText.substring(0, 4000),
+        source,
+        url: originalUrl
+    };
+}
+
+function findMainContent(html) {
+    let bestContent = '';
+    let bestScore = 0;
+    
+    // Yuksek puanli etiketler
+    const candidates = [];
+    
+    // 1. Semantic etiketler
+    const semanticTags = ['article', 'main', 'maincontent', 'content', 'post', 'entry', 'blog', 'story'];
+    
+    // 2. Class/ID kaliplari
+    const contentPatterns = [
+        /class="[^"]*(?:content|article|post|entry|blog|story|text|body|main)[^"]*"/gi,
+        /id="[^"]*(?:content|article|post|entry|blog|story|text|body|main)[^"]*"/gi,
+        /class="[^"]*(?:single|page)[^"]*"/gi
+    ];
+    
+    // Semantic etiketleri bul
+    for (const tag of semanticTags) {
+        const regex = new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'gi');
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+            const content = match[1];
+            const textLength = content.replace(/<[^>]+>/g, '').length;
+            const linkDensity = calculateLinkDensity(content);
+            const score = textLength * (1 - linkDensity);
+            
+            if (score > bestScore) {
+                bestScore = score;
+                bestContent = content;
+            }
+        }
+    }
+    
+    // Class/ID kaliplarini bul
+    for (const pattern of contentPatterns) {
+        const matches = html.match(pattern) || [];
+        for (const attr of matches) {
+            const classMatch = attr.match(/class="([^"]+)"/i) || attr.match(/id="([^"]+)"/i);
+            if (classMatch) {
+                const className = classMatch[1].replace(/\s+/g, '.');
+                const escapedClass = className.replace(/\./g, '\\.');
+                
+                const regex = new RegExp(`<div[^>]*${escapedClass}[^>]*>([\\s\\S]*?)<\\/div>`, 'gi');
+                let match;
+                while ((match = regex.exec(html)) !== null) {
+                    const content = match[1];
+                    const textLength = content.replace(/<[^>]+>/g, '').length;
+                    const linkDensity = calculateLinkDensity(content);
+                    const score = textLength * (1 - linkDensity);
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestContent = content;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Textise versiyonuysa direkt text olarak al
+    if (source === 'textise' || html.includes('<pre>')) {
+        const preMatch = html.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+        if (preMatch) {
+            return cleanText(preMatch[1]);
+        }
+    }
+    
+    return bestContent || html;
+}
+
+function calculateLinkDensity(element) {
+    const text = element.replace(/<[^>]+>/g, '');
+    const links = element.match(/<a[^>]*href=["'][^"']+["'][^>]*>/gi) || [];
+    const linkText = links.map(l => l.replace(/<[^>]+>/g, '')).join('');
+    
+    if (text.length === 0) return 1;
+    return linkText.length / text.length;
+}
+
+function extractMeta(html, name) {
+    // Standart meta
+    let match = html.match(new RegExp(`<meta[^>]+name=["']${name}["'][^>]+content=["']([^"']+)["']`, 'i'));
+    if (match) return match[1];
+    
+    // Ters sirali
+    match = html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+name=["']${name}["']`, 'i'));
+    if (match) return match[1];
+    
+    // OG/Twitter
+    if (name.includes(':')) {
+        match = html.match(new RegExp(`<meta[^>]+property=["']${name}["'][^>]+content=["']([^"']+)["']`, 'i'));
+        if (match) return match[1];
+        
+        match = html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+property=["']${name}["']`, 'i'));
+        if (match) return match[1];
+    }
+    
+    return null;
+}
+
+function extractAllHeadings(html, tag) {
+    const regex = new RegExp(`<${tag}[^>]*>([^<]+)<\\/${tag}>`, 'gi');
+    const headings = [];
+    let match;
+    
+    while ((match = regex.exec(html)) !== null) {
+        const text = cleanText(match[1]).trim();
+        if (text.length > 2 && text.length < 200) {
+            headings.push(text);
+        }
+    }
+    
+    return headings;
+}
+
+function extractParagraphs(html) {
+    const paragraphs = [];
+    
+    // <p> etiketleri
+    const pRegex = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+    let match;
+    while ((match = pRegex.exec(html)) !== null) {
+        const text = cleanText(match[1]).trim();
+        if (text.length > 30) {
+            paragraphs.push(text);
+        }
+    }
+    
+    // <div> icinde <br> olanlar
+    const divBrRegex = /<div[^>]*>([\s\S]*?)<\/div>/gi;
+    while ((match = divBrRegex.exec(html)) !== null) {
+        const content = match[1];
+        const parts = content.split(/<br\s*\/?>/gi);
+        for (const part of parts) {
+            const text = cleanText(part).trim();
+            if (text.length > 50 && !paragraphs.includes(text)) {
+                paragraphs.push(text);
+            }
+        }
+    }
+    
+    return paragraphs;
+}
+
+function extractLists(html) {
+    const lists = [];
+    
+    const ulRegex = /<ul[^>]*>([\s\S]*?)<\/ul>/gi;
+    const olRegex = /<ol[^>]*>([\s\S]*?)<\/ol>/gi;
+    
+    let match;
+    while ((match = ulRegex.exec(html)) !== null) {
+        const items = match[1].match(/<li[^>]*>([\s\S]*?)<\/li>/gi) || [];
+        const listItems = items.map(li => cleanText(li.replace(/<\/?li[^>]*>/gi, '')).trim()).filter(t => t.length > 5);
+        if (listItems.length > 0) {
+            lists.push(...listItems);
+        }
+    }
+    
+    while ((match = olRegex.exec(html)) !== null) {
+        const items = match[1].match(/<li[^>]*>([\s\S]*?)<\/li>/gi) || [];
+        const listItems = items.map(li => cleanText(li.replace(/<\/?li[^>]*>/gi, '')).trim()).filter(t => t.length > 5);
+        if (listItems.length > 0) {
+            lists.push(...listItems);
+        }
+    }
+    
+    return lists;
+}
+
+function extractTables(html) {
+    const tables = [];
+    
+    const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
+    let match;
+    while ((match = tableRegex.exec(html)) !== null) {
+        const rows = match[1].match(/<tr[^>]*>([\s\S]*?)<\/tr>/gi) || [];
+        const tableData = [];
+        
+        for (const row of rows.slice(0, 10)) {
+            const cells = row.match(/<(?:td|th)[^>]*>([\s\S]*?)<\/(?:td|th)>/gi) || [];
+            const rowData = cells.map(c => cleanText(c.replace(/<\/?(?:td|th)[^>]*>/gi, '')).trim()).filter(t => t.length > 0);
+            if (rowData.length > 0) {
+                tableData.push(rowData.join(' | '));
+            }
+        }
+        
+        if (tableData.length > 0) {
+            tables.push(tableData.join('\n'));
+        }
+    }
+    
+    return tables;
+}
+
+function extractCodeBlocks(html) {
+    const codes = [];
+    
+    const codeRegex = /<(?:pre|code)[^>]*>([\s\S]*?)<\/(?:pre|code)>/gi;
+    let match;
+    while ((match = codeRegex.exec(html)) !== null) {
+        const code = cleanText(match[1]).trim();
+        if (code.length > 20 && code.length < 1000) {
+            codes.push(code);
+        }
+    }
+    
+    return codes;
+}
+
+function cleanHTML(html) {
+    // Once tum zararli kodlari temizle
+    let clean = html
         .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<noscript[^>]*>[\s\S]*?<\/noscript>/gi, '')
+        .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
+        .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<svg[^>]*>[\s\S]*?<\/svg>/gi, '')
+        .replace(/<canvas[^>]*>[\s\S]*?<\/canvas>/gi, '')
+        .replace(/<video[^>]*>[\s\S]*?<\/video>/gi, '')
+        .replace(/<audio[^>]*>[\s\S]*?<\/audio>/gi, '')
+        .replace(/<embed[^>]*>/gi, '')
+        .replace(/<object[^>]*>[\s\S]*?<\/object>/gi, '');
+    
+    // Navigasyon ve yan elemanlari temizle
+    clean = clean
         .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
         .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
         .replace(/<header[^>]*>[\s\S]*?<\/header>/gi, '')
         .replace(/<aside[^>]*>[\s\S]*?<\/aside>/gi, '')
         .replace(/<form[^>]*>[\s\S]*?<\/form>/gi, '')
-        .replace(/<!--[\s\S]*?-->/g, '')
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/p>/gi, '\n\n')
-        .replace(/<\/div>/gi, '\n')
-        .replace(/<\/li>/gi, '\n')
-        .replace(/<[^>]+>/g, '')
-        .replace(/\n{3,}/g, '\n\n')
-        .trim();
+        .replace(/<button[^>]*>[\s\S]*?<\/button>/gi, '')
+        .replace(/<input[^>]*>/gi, '')
+        .replace(/<select[^>]*>[\s\S]*?<\/select>/gi, '');
     
-    return {
-        title: cleanText(title),
-        description: cleanText(description),
-        headings: [...h1s, ...h2s, ...h3s].slice(0, 8),
-        text: text.substring(0, 3000),
-        source
-    };
+    return clean;
 }
 
 // ==================== SITE ANALIZI ====================
@@ -646,7 +969,7 @@ async function analyzeWebsite(url) {
     try {
         const response = await fetch(url, {
             headers: getBrowserHeaders(),
-            signal: AbortSignal.timeout(10000)
+            signal: AbortSignal.timeout(12000)
         });
         if (response.ok) {
             html = await response.text();
@@ -696,73 +1019,36 @@ async function analyzeWebsite(url) {
         return `SITE ANALIZI: ${url}\n\nDurum: Siteye erisilemedi\n\nManuel kontrol icin:\n- https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}\n- https://web.archive.org/web/*/${url.replace('https://', '')}`;
     }
     
+    // Yeni gelismis icerik cekme
+    const content = extractContentAdvanced(html, bypassMethod, url);
+    
     let report = '';
     report += `SITE ANALIZI\n`;
     report += `URL: ${url}\n`;
     report += `Kaynak: ${bypassMethod}\n`;
     report += `================================\n\n`;
     
-    // HTML Yapisi
-    const lang = html.match(/<html[^>]*lang="([^"]+)"/i)?.[1] || 'Belirtilmemis';
-    const charset = html.match(/<meta[^>]*charset="([^"]+)"/i)?.[1] || 'UTF-8';
-    
-    report += `DIL: ${lang}\n`;
-    report += `KARAKTER: ${charset}\n`;
+    // Meta bilgileri
+    report += `META BILGILER:\n`;
+    report += `Baslik: ${content.title || 'Yok'}\n`;
+    report += `Aciklama: ${content.description || 'Yok'}\n\n`;
     
     // Basliklar
-    const h1s = [...html.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi)].map(m => cleanText(m[1]));
-    const h2s = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi)].map(m => cleanText(m[1]));
-    const h3s = [...html.matchAll(/<h3[^>]*>([^<]+)<\/h3>/gi)].map(m => cleanText(m[1]));
-    
-    report += `\nBASLIKLAR:\n`;
-    report += `H1 (${h1s.length}): ${h1s.slice(0, 3).join(', ') || 'Yok'}\n`;
-    report += `H2 (${h2s.length}): ${h2s.slice(0, 3).join(', ') || 'Yok'}\n`;
-    report += `H3 (${h3s.length}): ${h3s.slice(0, 3).join(', ') || 'Yok'}\n`;
-    
-    // Semantik
-    report += `\nSEMANTIK YAPI:\n`;
-    report += `<header>: ${/<header/i.test(html) ? 'Var' : 'Yok'}\n`;
-    report += `<nav>: ${/<nav/i.test(html) ? 'Var' : 'Yok'}\n`;
-    report += `<main>: ${/<main/i.test(html) ? 'Var' : 'Yok'}\n`;
-    report += `<article>: ${/<article/i.test(html) ? 'Var' : 'Yok'}\n`;
-    report += `<section>: ${/<section/i.test(html) ? 'Var' : 'Yok'}\n`;
-    report += `<footer>: ${/<footer/i.test(html) ? 'Var' : 'Yok'}\n`;
-    
-    // SEO
-    const title = html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] || 'Yok';
-    const metaDesc = html.match(/<meta[^>]*name="description"[^>]*content="([^"]+)"/i)?.[1] || 'Yok';
-    const ogTitle = html.match(/<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i)?.[1] || 'Yok';
-    const ogImage = html.match(/<meta[^>]*property="og:image"[^>]*content="([^"]+)"/i)?.[1] || 'Yok';
-    
-    report += `\nSEO:\n`;
-    report += `Title: ${cleanText(title).substring(0, 70)}\n`;
-    report += `Description: ${cleanText(metaDesc).substring(0, 100)}\n`;
-    report += `OG Title: ${cleanText(ogTitle).substring(0, 50)}\n`;
-    report += `OG Image: ${ogImage ? 'Var' : 'Yok'}\n`;
+    if (content.headings.length > 0) {
+        report += `BASLIKLAR:\n`;
+        report += content.headings.slice(0, 5).map((h, i) => `${i + 1}. ${h}`).join('\n');
+        report += '\n\n';
+    }
     
     // Teknolojiler
-    report += `\nTEKNOLOJILER:\n`;
+    report += `TEKNOLOJILER:\n`;
     const techs = detectTech(html);
-    report += (techs.length > 0 ? techs.join(', ') : 'Belirlenemedi') + '\n';
+    report += (techs.length > 0 ? techs.join(', ') : 'Belirlenemedi') + '\n\n';
     
-    // Istatistikler
-    report += `\nICERIK:\n`;
-    report += `Gorseller: ${(html.match(/<img/gi) || []).length}\n`;
-    report += `Linkler: ${(html.match(/<a /gi) || []).length}\n`;
-    report += `Formlar: ${(html.match(/<form/gi) || []).length}\n`;
-    
-    // Ana metin
-    let text = html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-        .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    
-    report += `\nSITE METNI:\n`;
-    report += text.substring(0, 2500);
+    // Icerik
+    report += `ICERIK (${content.text.length} karakter):\n`;
+    report += `================================\n`;
+    report += content.text.substring(0, 3500);
     
     return report;
 }
