@@ -2,392 +2,188 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- SEO Meta Tags -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RLM 5 - Türkçe Yapay Zeka Asistan | Troye Ekibi</title>
     <meta name="description" content="RLM 5, Türkiye'nin en gelişmiş ücretsiz yapay zeka asistanı. Kod yazma, makale oluşturma, soru cevaplama ve daha fazlası için Troye Ekibi tarafından geliştirildi.">
-    <meta name="keywords" content="yapay zeka, AI asistan, Türkçe chatbot, ücretsiz AI, RLM 5, Troye Ekibi, kod yazma, makale yazma, sohbet robotu, искусственный интеллект, chatbot Türkiye">
-    <meta name="author" content="Troye Ekibi">
-    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="keywords" content="yapay zeka, AI asistan, Türkçe chatbot, ücretsiz AI, RLM 5, Troye Ekibi">
+    <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://rlm5.vercel.app/">
-    
-    <!-- Theme Color -->
     <meta name="theme-color" content="#0881F0">
-    <meta name="msapplication-TileColor" content="#0881F0">
-    
-    <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230881F0'/><text x='50' y='68' text-anchor='middle' fill='white' font-size='50' font-family='system-ui' font-weight='bold'>R</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230881F0'/><text x='50' y='68' text-anchor='middle' fill='white' font-size='50' font-family='system-ui' font-weight='bold'>R</text></svg>">
-    
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://rlm5.vercel.app/">
-    <meta property="og:title" content="RLM 5 - Türkçe Yapay Zeka Asistan">
-    <meta property="og:description" content="Türkiye'nin en gelişmiş ücretsiz yapay zeka asistanı. Kod yazma, makale oluşturma, soru cevaplama ve daha fazlası.">
-    <meta property="og:image" content="https://rlm5.vercel.app/og-image.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="RLM 5 - Türkçe Yapay Zeka Asistan">
-    <meta property="og:site_name" content="RLM 5">
-    <meta property="og:locale" content="tr_TR">
-    
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:site" content="@troyeekipi">
-    <meta name="twitter:creator" content="@troyeekipi">
-    <meta name="twitter:title" content="RLM 5 - Türkçe Yapay Zeka Asistan">
-    <meta name="twitter:description" content="Türkiye'nin en gelişmiş ücretsiz yapay zeka asistanı.">
-    <meta name="twitter:image" content="https://rlm5.vercel.app/og-image.png">
-    <meta name="twitter:image:alt" content="RLM 5 Yapay Zeka Asistan">
-    
-    <!-- Preconnect for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-    <link rel="dns-prefetch" href="https://unpkg.com">
-    
-    <!-- Fonts -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- External Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    }
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }
                 }
             }
         }
     </script>
-    
     <style>
-        * { font-family: 'Inter', system-ui, sans-serif; }
-        body { background: #fafafa; }
+        * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+        html, body { height: 100%; margin: 0; }
+        body { background: #f0f4f8; }
         .dark body { background: #0a0a0a; }
         
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-        .dark ::-webkit-scrollbar-thumb { background: #374151; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
         
-        .msg-user { animation: slideIn 0.3s ease; }
-        .msg-ai { animation: slideIn 0.3s ease; }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-user, .msg-ai { animation: slideIn 0.3s ease; }
         
-        .typing span {
-            animation: bounce 1.4s infinite ease-in-out;
-        }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+        .typing span { animation: bounce 1.4s infinite ease-in-out; display: inline-block; }
         .typing span:nth-child(1) { animation-delay: -0.32s; }
         .typing span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.4; }
-            40% { transform: scale(1); opacity: 1; }
-        }
         
-        pre { background: #1a1a2e; color: #e4e4e7; padding: 1rem; border-radius: 12px; overflow-x: auto; }
-        code:not(pre code) { background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-        .dark code:not(pre code) { background: #374151; }
+        pre { background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.75rem 0; }
+        code:not(pre code) { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.875rem; }
+        .dark code:not(pre code) { background: #334155; color: #f1f5f9; }
+        .dark pre { background: #0f172a; }
         
-        .btn:hover { transform: translateY(-1px); }
         .btn { transition: all 0.2s ease; }
-        
+        .btn:hover { transform: translateY(-1px); }
         textarea { resize: none; }
-        textarea::-webkit-scrollbar { display: none; }
         
-        .toast { animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
         @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
         @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+        .toast { animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards; }
         
-        .sidebar { transition: width 0.3s ease, opacity 0.3s ease; }
+        .card-hover { transition: all 0.2s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
         
-        .logo-glow {
-            box-shadow: 0 0 60px rgba(8, 129, 240, 0.3);
-        }
+        .sidebar-open { transform: translateX(0) !important; }
         
-        .card-hover:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-        }
-        .dark .card-hover:hover {
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); position: fixed; z-index: 50; width: 280px !important; }
+            .overlay { display: none; }
+            .overlay.active { display: block; }
         }
     </style>
-    
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@graph": [
-            {
-                "@type": "WebApplication",
-                "name": "RLM 5",
-                "alternateName": ["RLM", "RLM5", "RLM Beş"],
-                "description": "Türkiye'nin en gelişmiş ücretsiz yapay zeka asistanı. Kod yazma, makale oluşturma, soru cevaplama ve daha fazlası.",
-                "url": "https://rlm5.vercel.app/",
-                "applicationCategory": "https://schema.org/BusinessApplication",
-                "operatingSystem": "Web, iOS, Android, Windows, Mac, Linux",
-                "offers": {
-                    "@type": "Offer",
-                    "price": "0",
-                    "priceCurrency": "TRY",
-                    "availability": "https://schema.org/InStock"
-                },
-                "aggregateRating": {
-                    "@type": "AggregateRating",
-                    "ratingValue": "4.8",
-                    "ratingCount": "1247"
-                },
-                "author": {
-                    "@type": "Organization",
-                    "name": "Troye Ekibi",
-                    "url": "https://rlm5.vercel.app/"
-                }
-            },
-            {
-                "@type": "FAQPage",
-                "mainEntity": [
-                    {
-                        "@type": "Question",
-                        "name": "RLM 5 nedir?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "RLM 5, Troye Ekibi tarafından geliştirilen Türkiye'nin en gelişmiş yapay zeka asistanıdır. Ücretsiz olarak kod yazma, makale oluşturma, soru cevaplama ve daha fazlası için kullanılabilir."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "RLM 5 ücretsiz mi?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Evet, RLM 5 tamamen ücretsizdir. Herhangi bir kayıt veya ödeme gerekmeden kullanabilirsiniz."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "RLM 5 hangi dilleri destekler?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "RLM 5 primarily Türkçe destekler ancak İngilizce ve diğer dillerde de yardımcı olabilir. Kod yazma, çeviri, analiz ve daha birçok konuda yardımcı olur."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "RLM 5 kim tarafından geliştirildi?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "RLM 5, Türk yazılım geliştirici ekibi olan Troye Ekibi tarafından geliştirildi. Emre İskın liderliğinde kurulan Troye Ekibi, yapay zeka uygulamaları üzerine çalışmaktadır."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "RLM 5 ile kod yazabilir miyim?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Evet, RLM 5 ile Python, JavaScript, Java, C++, Go, Rust ve daha birçok programlama dilinde kod yazabilir, hata ayıklama yapabilir ve açıklamalar alabilirsiniz."
-                        }
-                    },
-                    {
-                        "@type": "Question",
-                        "name": "RLM 5 güvenli mi?",
-                        "acceptedAnswer": {
-                            "@type": "Answer",
-                            "text": "Evet, RLM 5 güvenli bir yapay zeka asistanıdır. Verileriniz korunur ve üçüncü taraflarla paylaşılmaz."
-                        }
-                    }
-                ]
-            },
-            {
-                "@type": "Organization",
-                "name": "Troye Ekibi",
-                "url": "https://rlm5.vercel.app/",
-                "logo": "https://rlm5.vercel.app/logo.png",
-                "description": "Troye Ekibi, Türkiye merkezli bir yazılım geliştirme ve yapay zeka şirketidir.",
-                "foundingDate": "2024",
-                "founder": {
-                    "@type": "Person",
-                    "name": "Emre İskın"
-                },
-                "areaServed": {
-                    "@type": "Country",
-                    "name": "Türkiye"
-                },
-                "sameAs": [
-                    "https://github.com/troye-ekip",
-                    "https://twitter.com/troyeekipi"
-                ]
-            },
-            {
-                "@type": "BreadcrumbList",
-                "itemListElement": [
-                    {
-                        "@type": "ListItem",
-                        "position": 1,
-                        "name": "Ana Sayfa",
-                        "item": "https://rlm5.vercel.app/"
-                    }
-                ]
-            },
-            {
-                "@type": "SoftwareApplication",
-                "name": "RLM 5",
-                "softwareVersion": "5.0",
-                "operatingSystem": "Web",
-                "applicationCategory": "Chatbot",
-                "offers": {
-                    "@type": "Offer",
-                    "price": "0",
-                    "priceCurrency": "TRY"
-                }
-            }
-        ]
-    }
-    </script>
 </head>
 <body class="h-screen flex overflow-hidden">
     
-    <!-- Semantic Header -->
-    <header>
-        <!-- Sidebar -->
-        <aside id="sidebar" class="sidebar w-[280px] h-full bg-white dark:bg-[#111] border-r border-gray-200 dark:border-gray-800 flex flex-col" role="navigation" aria-label="Sohbet Geçmişi">
-            
-            <!-- Logo -->
-            <div class="p-5 border-b border-gray-100 dark:border-gray-800">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0881F0] to-[#00D4FF] flex items-center justify-center logo-glow" role="img" aria-label="RLM 5 Logosu">
-                        <span class="text-white font-bold text-lg" aria-hidden="true">R</span>
-                    </div>
-                    <div>
-                        <h1 class="font-semibold text-gray-900 dark:text-white">RLM 5</h1>
-                        <p class="text-xs text-gray-500">Troye Ekibi</p>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- New Chat -->
-            <div class="p-4">
-                <button id="btnNewChat" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-[#0881F0] to-[#00D4FF] text-white font-medium rounded-xl hover:opacity-90 btn shadow-lg shadow-blue-500/20" aria-label="Yeni Sohbet Başlat">
-                    <i data-lucide="plus" class="w-5 h-5" aria-hidden="true"></i>
-                    <span>Yeni Sohbet</span>
-                </button>
-            </div>
-            
-            <!-- Chat List -->
-            <nav class="flex-1 overflow-y-auto px-3 py-2" aria-label="Sohbet Listesi">
-                <p class="px-2 py-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Geçmiş</p>
-                <div id="chatList" class="space-y-1" role="list">
-                </div>
-            </nav>
-            
-            <!-- Footer -->
-            <footer class="p-4 border-t border-gray-100 dark:border-gray-800">
-                <button id="btnClear" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors" aria-label="Sohbetleri Temizle">
-                    <i data-lucide="trash-2" class="w-4 h-4" aria-hidden="true"></i>
-                    <span class="text-sm">Sohbetleri Temizle</span>
-                </button>
-                <button id="btnTheme" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors mt-1" aria-label="Tema Değiştir">
-                    <i data-lucide="moon" class="w-4 h-4 dark:hidden" aria-hidden="true"></i>
-                    <i data-lucide="sun" class="w-4 h-4 hidden dark:block" aria-hidden="true"></i>
-                    <span class="text-sm">Tema Değiştir</span>
-                </button>
-            </footer>
-        </aside>
-    </header>
+    <!-- Mobile Overlay -->
+    <div id="overlay" class="overlay fixed inset-0 bg-black/50 z-40 md:hidden" onclick="toggleSidebar()"></div>
     
-    <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full min-w-0" role="main">
-        
-        <!-- Header -->
-        <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <h2 id="chatTitle" class="font-medium text-gray-700 dark:text-gray-300" aria-live="polite">Yeni Sohbet</h2>
-                </div>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar w-72 h-full bg-white dark:bg-[#111] border-r border-gray-200 dark:border-gray-800 flex flex-col fixed md:relative -translate-x-full md:translate-x-0 transition-transform duration-300">
+        <div class="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0881F0] to-[#00D4FF] flex items-center justify-center">
+                <span class="text-white font-bold text-lg">R</span>
+            </div>
+            <div>
+                <h1 class="font-semibold text-gray-900 dark:text-white">RLM 5</h1>
+                <p class="text-xs text-gray-500">Troye Ekibi</p>
             </div>
         </div>
         
-        <!-- Messages Area -->
-        <section id="messages" class="flex-1 overflow-y-auto" aria-label="Sohbet Mesajları" role="log" aria-live="polite">
-            
-            <!-- Welcome -->
-            <section id="welcome" class="h-full flex flex-col items-center justify-center px-6 py-12" aria-labelledby="welcome-title">
-                <div class="text-center max-w-lg mx-auto">
-                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0881F0] to-[#00D4FF] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-blue-500/30" role="img" aria-label="RLM 5 Logosu">
-                        <span class="text-white font-bold text-3xl" aria-hidden="true">R</span>
-                    </div>
-                    <h1 id="welcome-title" class="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                        Merhaba, ben <span class="bg-gradient-to-r from-[#0881F0] to-[#00D4FF] bg-clip-text text-transparent">RLM 5</span>
-                    </h1>
-                    <p class="text-gray-500 dark:text-gray-400 mb-10">Size nasıl yardımcı olabilirim?</p>
-                    
-                    <nav class="grid grid-cols-2 gap-3" aria-label="Hızlı İşlemler">
-                        <button onclick="quickAsk('Kod yazmama yardımcı ol')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="code-2" class="w-5 h-5 text-[#0881F0] mb-2" aria-hidden="true"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Kod Yaz</p>
-                            <p class="text-xs text-gray-500 mt-1">Yazılım geliştirme</p>
-                        </button>
-                        <button onclick="quickAsk('Bir makale yaz')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="pen-tool" class="w-5 h-5 text-[#00D4FF] mb-2" aria-hidden="true"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Yazı Yaz</p>
-                            <p class="text-xs text-gray-500 mt-1">İçerik oluşturma</p>
-                        </button>
-                        <button onclick="quickAsk('Soru soracağım')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="help-circle" class="w-5 h-5 text-purple-500 mb-2" aria-hidden="true"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Soru Sor</p>
-                            <p class="text-xs text-gray-500 mt-1">Merak ettiğiniz her şey</p>
-                        </button>
-                        <button onclick="quickAsk('Bir rapor hazırla')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="file-text" class="w-5 h-5 text-green-500 mb-2" aria-hidden="true"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Rapor Hazırla</p>
-                            <p class="text-xs text-gray-500 mt-1">Analiz ve özet</p>
-                        </button>
-                    </nav>
-                </div>
-            </section>
-            
-            <!-- Chat Container -->
-            <article id="chatContainer" class="hidden max-w-3xl mx-auto px-6 py-8 space-y-6" aria-label="Sohbet Alanı">
-            </article>
-        </section>
+        <div class="p-3">
+            <button id="btnNewChat" class="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-[#0881F0] to-[#00D4FF] text-white font-medium rounded-xl btn">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                <span>Yeni Sohbet</span>
+            </button>
+        </div>
         
-        <!-- Input Area -->
-        <footer class="shrink-0 px-6 pb-6 pt-2">
+        <div class="flex-1 overflow-y-auto px-3 py-2">
+            <p class="px-2 py-2 text-xs font-medium text-gray-400 uppercase">Geçmiş</p>
+            <div id="chatList"></div>
+        </div>
+        
+        <div class="p-3 border-t border-gray-100 dark:border-gray-800 space-y-1">
+            <button id="btnClear" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                <span class="text-sm">Sohbetleri Temizle</span>
+            </button>
+            <button id="btnTheme" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
+                <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
+                <span class="text-sm">Tema Değiştir</span>
+            </button>
+        </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full min-w-0">
+        <!-- Header -->
+        <header class="shrink-0 px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#0a0a0a] flex items-center justify-between md:hidden">
+            <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                <i data-lucide="menu" class="w-5 h-5 text-gray-700 dark:text-gray-300"></i>
+            </button>
+            <h2 class="font-medium text-gray-700 dark:text-gray-300">RLM 5</h2>
+            <div class="w-10"></div>
+        </header>
+        
+        <div class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md hidden md:block">
+            <h2 id="chatTitle" class="font-medium text-gray-700 dark:text-gray-300">Yeni Sohbet</h2>
+        </div>
+        
+        <!-- Messages -->
+        <div id="messages" class="flex-1 overflow-y-auto">
+            <div id="welcome" class="h-full flex flex-col items-center justify-center px-6 py-12">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0881F0] to-[#00D4FF] flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                    <span class="text-white font-bold text-3xl">R</span>
+                </div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-3 text-center">
+                    Merhaba, ben <span class="bg-gradient-to-r from-[#0881F0] to-[#00D4FF] bg-clip-text text-transparent">RLM 5</span>
+                </h1>
+                <p class="text-gray-500 dark:text-gray-400 mb-8 text-center">Size nasıl yardımcı olabilirim?</p>
+                
+                <div class="grid grid-cols-2 gap-3 max-w-md w-full">
+                    <button onclick="quickAsk('Kod yazmama yardımcı ol')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl text-left">
+                        <i data-lucide="code-2" class="w-5 h-5 text-[#0881F0] mb-2"></i>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Kod Yaz</p>
+                    </button>
+                    <button onclick="quickAsk('Bir makale yaz')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl text-left">
+                        <i data-lucide="pen-tool" class="w-5 h-5 text-[#00D4FF] mb-2"></i>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Yazı Yaz</p>
+                    </button>
+                    <button onclick="quickAsk('Soru soracağım')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl text-left">
+                        <i data-lucide="help-circle" class="w-5 h-5 text-purple-500 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Soru Sor</p>
+                    </button>
+                    <button onclick="quickAsk('Bir rapor hazırla')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-xl text-left">
+                        <i data-lucide="file-text" class="w-5 h-5 text-green-500 mb-2"></i>
+                        <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Rapor Hazırla</p>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="chatContainer" class="hidden max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4"></div>
+        </div>
+        
+        <!-- Input -->
+        <div class="shrink-0 px-4 md:px-6 pb-4 md:pb-6 pt-2">
             <div class="max-w-3xl mx-auto">
-                <form id="chatForm" class="relative bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg shadow-gray-200/50 dark:shadow-black/50 transition-shadow focus-within:shadow-xl" onsubmit="return false;">
-                    <label for="input" class="sr-only">Mesajınızı yazın</label>
+                <div class="relative bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg transition-shadow focus-within:shadow-xl focus-within:border-[#0881F0]">
                     <textarea 
                         id="input" 
                         rows="1" 
-                        class="w-full px-5 py-4 pr-14 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none max-h-40"
+                        class="w-full px-4 py-3 pr-12 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none max-h-32 text-sm md:text-base"
                         placeholder="Mesajınızı yazın..."
-                        aria-label="Mesaj girişi"
                     ></textarea>
-                    <button id="btnSend" type="submit" class="absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#0881F0] to-[#00D4FF] text-white rounded-xl disabled:opacity-40 disabled:cursor-not-allowed btn" disabled aria-label="Gönder">
-                        <i data-lucide="arrow-up" class="w-5 h-5" aria-hidden="true"></i>
+                    <button id="btnSend" class="absolute right-2 bottom-2 w-9 h-9 md:w-10 md:h-10 flex items-center justify-center bg-gradient-to-br from-[#0881F0] to-[#00D4FF] text-white rounded-xl disabled:opacity-40 btn" disabled>
+                        <i data-lucide="arrow-up" class="w-4 h-4 md:w-5 md:h-5"></i>
                     </button>
-                </form>
-                <p class="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">RLM 5 ❤️ | Troye Ekibi</p>
+                </div>
+                <p class="text-center text-xs text-gray-400 mt-2">RLM 5 ❤️ | Troye Ekibi</p>
             </div>
-        </footer>
+        </div>
     </main>
     
-    <!-- Toast Notifications -->
-    <div id="toast" class="fixed bottom-6 right-6 z-50" role="alert" aria-live="assertive"></div>
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 z-50"></div>
 
     <script>
         lucide.createIcons();
-
-        // Elements
+        
         const input = document.getElementById('input');
         const btnSend = document.getElementById('btnSend');
         const messages = document.getElementById('messages');
@@ -398,90 +194,81 @@
         const btnNewChat = document.getElementById('btnNewChat');
         const btnTheme = document.getElementById('btnTheme');
         const btnClear = document.getElementById('btnClear');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
         const toast = document.getElementById('toast');
 
-        // State
         let history = [];
         let chatId = null;
         let generating = false;
         let chats = JSON.parse(localStorage.getItem('rlm_chats') || '{}');
 
-        // Init
-        if (localStorage.theme === 'dark') {
-            document.documentElement.classList.add('dark');
+        if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('sidebar-open');
+            overlay.classList.toggle('active');
         }
 
-        // Theme
         btnTheme.onclick = () => {
             document.documentElement.classList.toggle('dark');
             localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
             lucide.createIcons();
         };
 
-        // New Chat
         btnNewChat.onclick = () => {
             chatId = 'c_' + Date.now();
             history = [];
             welcome.classList.remove('hidden');
-            welcome.classList.add('flex');
             chatContainer.classList.add('hidden');
             chatContainer.innerHTML = '';
             chatTitle.textContent = 'Yeni Sohbet';
             input.value = '';
             btnSend.disabled = true;
             renderChats();
+            if (window.innerWidth < 768) toggleSidebar();
         };
 
-        // Quick Ask
         function quickAsk(text) {
             input.value = text;
             input.dispatchEvent(new Event('input'));
             input.focus();
         }
 
-        // Render Chats
         function renderChats() {
             const ids = Object.keys(chats).sort((a, b) => chats[b].time - chats[a].time);
-            
             if (ids.length === 0) {
                 chatList.innerHTML = '<p class="px-3 py-4 text-sm text-gray-400 text-center">Henüz sohbet yok</p>';
-                lucide.createIcons();
                 return;
             }
-            
             chatList.innerHTML = ids.map(id => {
                 const c = chats[id];
                 const first = c.msgs.find(m => m.r === 'user');
-                const title = first ? first.c.substring(0, 30) + (first.c.length > 30 ? '...' : '') : 'Yeni Sohbet';
+                const title = first ? first.c.substring(0, 25) + (first.c.length > 25 ? '...' : '') : 'Yeni Sohbet';
                 const active = id === chatId;
-                return `
-                    <button onclick="loadChat('${id}')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors ${active ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}" role="listitem">
-                        <i data-lucide="message-circle" class="w-4 h-4 shrink-0" aria-hidden="true"></i>
-                        <span class="flex-1 truncate text-sm">${escapeHtml(title)}</span>
-                    </button>
-                `;
+                return `<button onclick="loadChat('${id}')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left text-sm ${active ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'}">
+                    <i data-lucide="message-circle" class="w-4 h-4 shrink-0"></i>
+                    <span class="flex-1 truncate">${escapeHtml(title)}</span>
+                </button>`;
             }).join('');
             lucide.createIcons();
         }
 
-        // Load Chat
         function loadChat(id) {
             chatId = id;
             const c = chats[id];
             if (!c) return;
-            
             history = c.msgs.map(m => ({ role: m.r, content: m.c }));
             welcome.classList.add('hidden');
-            welcome.classList.remove('flex');
             chatContainer.classList.remove('hidden');
             chatContainer.innerHTML = '';
-            
             c.msgs.forEach(m => addMsg(m.r, m.c));
             renderChats();
             scroll();
+            if (window.innerWidth < 768) toggleSidebar();
         }
 
-        // Save
         function save() {
             if (chatId && history.length) {
                 chats[chatId] = { msgs: history.map(h => ({ r: h.role, c: h.content })), time: Date.now() };
@@ -489,7 +276,6 @@
             }
         }
 
-        // Clear
         btnClear.onclick = () => {
             if (confirm('Tüm sohbetleri sil?')) {
                 chats = {};
@@ -499,14 +285,12 @@
             }
         };
 
-        // Input
         input.oninput = () => {
             input.style.height = 'auto';
-            input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+            input.style.height = Math.min(input.scrollHeight, 128) + 'px';
             btnSend.disabled = !input.value.trim() || generating;
         };
 
-        // Enter
         input.onkeydown = e => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -514,19 +298,14 @@
             }
         };
 
-        // Send
         btnSend.onclick = send;
 
         async function send() {
             const text = input.value.trim();
             if (!text || generating) return;
-
-            if (!chatId) {
-                chatId = 'c_' + Date.now();
-            }
+            if (!chatId) chatId = 'c_' + Date.now();
 
             welcome.classList.add('hidden');
-            welcome.classList.remove('flex');
             chatContainer.classList.remove('hidden');
             chatTitle.textContent = text.substring(0, 30) + (text.length > 30 ? '...' : '');
 
@@ -539,7 +318,7 @@
             generating = true;
 
             const mid = 'm_' + Date.now();
-            addMsg('ai', '<div class="typing"><span class="inline-block w-2 h-2 bg-gray-400 rounded-full"></span><span class="inline-block w-2 h-2 bg-gray-400 rounded-full mx-1"></span><span class="inline-block w-2 h-2 bg-gray-400 rounded-full"></span></div>', mid);
+            addMsg('ai', '<div class="typing"><span class="w-2 h-2 bg-gray-400 rounded-full"></span><span class="w-2 h-2 bg-gray-400 rounded-full mx-1"></span><span class="w-2 h-2 bg-gray-400 rounded-full"></span></div>', mid);
             scroll();
 
             try {
@@ -558,14 +337,12 @@
                         save();
                         renderChats();
                     } else {
-                        el.innerHTML = `<p class="text-red-500 text-sm">${data.error || 'Hata oluştu'}</p>`;
+                        el.innerHTML = '<p style="color:#ef4444">Hata: ' + (data.error || 'Bilinmeyen hata') + '</p>';
                     }
                 }
-            } catch {
+            } catch (err) {
                 const el = document.getElementById(mid);
-                if (el) {
-                    el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası</p>';
-                }
+                if (el) el.innerHTML = '<p style="color:#ef4444">Bağlantı hatası</p>';
             }
 
             generating = false;
@@ -574,55 +351,52 @@
             lucide.createIcons();
         }
 
-        // Add Message
-        function addMsg(role, content) {
+        function addMsg(role, content, id = null) {
             const div = document.createElement('div');
-            div.className = role === 'user' ? 'flex justify-end msg-user' : 'flex justify-start msg-ai';
+            if (id) div.id = id;
+            div.className = role === 'user' ? 'flex justify-end' : 'flex justify-start';
             
             const bubble = document.createElement('div');
-            bubble.className = role === 'user' 
-                ? 'max-w-[80%] px-5 py-3 bg-gradient-to-br from-[#0881F0] to-[#00D4FF] text-white rounded-2xl rounded-br-md shadow-lg'
-                : 'max-w-[80%] px-5 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md shadow-sm';
+            const isAi = role === 'ai';
+            bubble.className = isAi 
+                ? 'max-w-[85%] px-4 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-2xl rounded-bl-md shadow-sm'
+                : 'max-w-[85%] px-4 py-3 bg-gradient-to-br from-[#0881F0] to-[#00D4FF] text-white rounded-2xl rounded-br-md shadow-lg';
             
-            if (role === 'ai') {
+            if (isAi) {
                 bubble.innerHTML = content;
+                bubble.style.color = '#374151';
             } else {
-                bubble.innerHTML = `<p class="text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(content)}</p>`;
+                bubble.innerHTML = '<p style="color:white" class="text-sm leading-relaxed whitespace-pre-wrap">' + escapeHtml(content) + '</p>';
             }
             
             div.appendChild(bubble);
             chatContainer.appendChild(div);
         }
 
-        // Format
         function format(text) {
             let html = text
-                .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre class="bg-[#1a1a2e] text-[#e4e4e7] p-4 rounded-xl overflow-x-auto my-2"><code>$2</code></pre>')
-                .replace(/`([^`]+)`/g, '<code class="bg-[#e5e7eb] dark:bg-[#374151] px-1.5 py-0.5 rounded text-sm">$1</code>')
+                .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-                .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>')
-                .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
-                .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>')
-                .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc my-1">$1</li>')
-                .replace(/\n\n/g, '</p><p class="mt-2">')
+                .replace(/^### (.+)$/gm, '<h3 style="font-weight:600;margin-top:12px">$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2 style="font-weight:600;margin-top:16px">$1</h2>')
+                .replace(/^# (.+)$/gm, '<h1 style="font-weight:700;margin-top:16px">$1</h1>')
+                .replace(/^- (.+)$/gm, '<li style="margin-left:16px;list-style:disc">$1</li>')
                 .replace(/\n/g, '<br>');
-            return `<div class="text-sm leading-relaxed text-gray-800 dark:text-gray-200"><p>${html}</p></div>`;
+            return '<div style="color:#374151" class="text-sm leading-relaxed"><p>' + html + '</p></div>';
         }
 
-        // Escape
         function escapeHtml(t) {
             const d = document.createElement('div');
             d.textContent = t;
             return d.innerHTML;
         }
 
-        // Scroll
         function scroll() {
             messages.scrollTop = messages.scrollHeight;
         }
 
-        // Toast
         function showToast(msg) {
             const t = document.createElement('div');
             t.className = 'toast px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl shadow-lg text-sm font-medium';
@@ -631,7 +405,6 @@
             setTimeout(() => t.remove(), 3000);
         }
 
-        // Init
         renderChats();
     </script>
 </body>
