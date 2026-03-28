@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RLM 5</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230881F0'/><text x='50' y='68' text-anchor='middle' fill='white' font-size='50' font-family='system-ui' font-weight='bold'>R</text></svg>">
+    <title>RLM 5 - Kod Asistanı</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23667EEA'/><text x='50' y='68' text-anchor='middle' fill='white' font-size='50' font-family='system-ui' font-weight='bold'>R</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://js.puter.com/v2/"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -17,6 +18,7 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
                     }
                 }
             }
@@ -24,13 +26,12 @@
     </script>
     <style>
         * { font-family: 'Inter', system-ui, sans-serif; }
-        body { background: #fafafa; }
-        .dark body { background: #0a0a0a; }
+        body { background: #0a0a0f; }
         
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
-        .dark ::-webkit-scrollbar-thumb { background: #374151; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a2e; }
+        ::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #718096; }
         
         .msg-user { animation: slideIn 0.3s ease; }
         .msg-ai { animation: slideIn 0.3s ease; }
@@ -49,9 +50,66 @@
             40% { transform: scale(1); opacity: 1; }
         }
         
-        pre { background: #1a1a2e; color: #e4e4e7; padding: 1rem; border-radius: 12px; overflow-x: auto; }
-        code:not(pre code) { background: #e5e7eb; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-        .dark code:not(pre code) { background: #374151; }
+        .code-block {
+            position: relative;
+            background: #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+        
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: #16162a;
+            border-bottom: 1px solid #2d2d4a;
+        }
+        
+        .copy-btn {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            color: #a78bfa;
+            border: 1px solid #a78bfa;
+            border-radius: 6px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background: #a78bfa;
+            color: #1a1a2e;
+        }
+        
+        .copy-btn.copied {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+        
+        pre { 
+            background: #1a1a2e !important; 
+            padding: 1rem !important; 
+            margin: 0 !important;
+            border-radius: 0 !important;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+        
+        code { font-family: 'Fira Code', monospace !important; }
+        
+        .dark pre { background: #1a1a2e !important; }
+        
+        .dark code:not(pre code) { 
+            background: #2d2d4a; 
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
         
         .btn:hover { transform: translateY(-1px); }
         .btn { transition: all 0.2s ease; }
@@ -66,39 +124,47 @@
         .sidebar { transition: width 0.3s ease, opacity 0.3s ease; }
         
         .logo-glow {
-            box-shadow: 0 0 60px rgba(8, 129, 240, 0.3);
+            box-shadow: 0 0 60px rgba(102, 126, 234, 0.4);
         }
         
         .card-hover:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 10px 40px rgba(102, 126, 234, 0.1);
         }
-        .dark .card-hover:hover {
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .code-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
     </style>
 </head>
 <body class="h-screen flex overflow-hidden">
     
     <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar w-[280px] h-full bg-white dark:bg-[#111] border-r border-gray-200 dark:border-gray-800 flex flex-col">
+    <aside id="sidebar" class="sidebar w-[300px] h-full bg-[#0f0f1a] border-r border-[#2d2d4a] flex flex-col">
         
         <!-- Logo -->
-        <div class="p-5 border-b border-gray-100 dark:border-gray-800">
+        <div class="p-5 border-b border-[#2d2d4a]">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0881F0] to-[#00D4FF] flex items-center justify-center logo-glow">
+                <div class="w-10 h-10 rounded-xl code-icon flex items-center justify-center logo-glow">
                     <span class="text-white font-bold text-lg">R</span>
                 </div>
                 <div>
-                    <h1 class="font-semibold text-gray-900 dark:text-white">RLM 5</h1>
-                    <p class="text-xs text-gray-500">G63 Asistan</p>
+                    <h1 class="font-semibold text-white">RLM 5</h1>
+                    <p class="text-xs text-purple-400">Kod Asistanı</p>
                 </div>
             </div>
         </div>
         
         <!-- New Chat -->
         <div class="p-4">
-            <button id="btnNewChat" class="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-[#0881F0] to-[#00D4FF] text-white font-medium rounded-xl hover:opacity-90 btn shadow-lg shadow-blue-500/20">
+            <button id="btnNewChat" class="w-full flex items-center justify-center gap-2 py-3 px-4 code-icon text-white font-medium rounded-xl hover:opacity-90 btn shadow-lg">
                 <i data-lucide="plus" class="w-5 h-5"></i>
                 <span>Yeni Sohbet</span>
             </button>
@@ -106,22 +172,16 @@
         
         <!-- Chat List -->
         <div class="flex-1 overflow-y-auto px-3 py-2">
-            <p class="px-2 py-2 text-xs font-medium text-gray-400 uppercase tracking-wider">Geçmiş</p>
+            <p class="px-2 py-2 text-xs font-medium text-gray-500 uppercase tracking-wider">Geçmiş</p>
             <div id="chatList" class="space-y-1">
-                <!-- Chats here -->
             </div>
         </div>
         
         <!-- Footer -->
-        <div class="p-4 border-t border-gray-100 dark:border-gray-800">
-            <button id="btnClear" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+        <div class="p-4 border-t border-[#2d2d4a]">
+            <button id="btnClear" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:bg-[#1a1a2e] rounded-lg transition-colors">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                 <span class="text-sm">Sohbetleri Temizle</span>
-            </button>
-            <button id="btnTheme" class="w-full flex items-center gap-3 px-3 py-2.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors mt-1">
-                <i data-lucide="moon" class="w-4 h-4 dark:hidden"></i>
-                <i data-lucide="sun" class="w-4 h-4 hidden dark:block"></i>
-                <span class="text-sm">Tema Değiştir</span>
             </button>
         </div>
     </aside>
@@ -130,16 +190,16 @@
     <main class="flex-1 flex flex-col h-full min-w-0">
         
         <!-- Header -->
-        <header class="shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md">
+        <header class="shrink-0 px-6 py-4 border-b border-[#2d2d4a] bg-[#0f0f1a]/80 backdrop-blur-md">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-4">
-                    <h2 id="chatTitle" class="font-medium text-gray-700 dark:text-gray-300">Yeni Sohbet</h2>
+                    <h2 id="chatTitle" class="font-medium text-gray-300">Yeni Sohbet</h2>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button id="btnThink" class="flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 transition-colors">
-                        <i data-lucide="brain" class="w-3.5 h-3.5"></i>
-                        <span>Deep Think</span>
-                    </button>
+                <div class="flex items-center gap-3">
+                    <span class="px-3 py-1 text-xs bg-green-500/20 text-green-400 rounded-full flex items-center gap-1">
+                        <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                        Sınırsız
+                    </span>
                 </div>
             </div>
         </header>
@@ -149,61 +209,79 @@
             
             <!-- Welcome -->
             <div id="welcome" class="h-full flex flex-col items-center justify-center px-6 py-12">
-                <div class="text-center max-w-lg mx-auto">
-                    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0881F0] to-[#00D4FF] flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-blue-500/30">
-                        <span class="text-white font-bold text-3xl">R</span>
+                <div class="text-center max-w-2xl mx-auto">
+                    <div class="w-24 h-24 rounded-2xl code-icon flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                        <span class="text-white font-bold text-4xl">R</span>
                     </div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                        Merhaba <span class="bg-gradient-to-r from-[#0881F0] to-[#00D4FF] bg-clip-text text-transparent">G63</span>
+                    <h1 class="text-4xl font-bold text-white mb-4">
+                        Merhaba, ben <span class="gradient-text">RLM 5</span>
                     </h1>
-                    <p class="text-gray-500 dark:text-gray-400 mb-10">Bugün size nasıl yardımcı olabilirim?</p>
+                    <p class="text-gray-400 mb-10 text-lg">Profesyonel kod asistanınız. Her türlü yazılım sorunuzda yardımcı olabilirim.</p>
                     
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="quickAsk('Kod yazmama yardımcı ol')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="code-2" class="w-5 h-5 text-[#0881F0] mb-2"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Kod Yaz</p>
-                            <p class="text-xs text-gray-500 mt-1">Yazılım geliştirme</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="quickAsk('Python ile bir web scraper yaz')" class="card-hover p-5 bg-[#1a1a2e] border border-[#2d2d4a] rounded-xl text-left transition-all group">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center mb-3 group-hover:bg-blue-500/30">
+                                <i data-lucide="globe" class="w-5 h-5 text-blue-400"></i>
+                            </div>
+                            <p class="text-sm font-medium text-white">Web Scraping</p>
+                            <p class="text-xs text-gray-500 mt-1">Veri çekme araçları</p>
                         </button>
-                        <button onclick="quickAsk('Bir makale yaz')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="pen-tool" class="w-5 h-5 text-[#00D4FF] mb-2"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Yazı Yaz</p>
-                            <p class="text-xs text-gray-500 mt-1">İçerik oluşturma</p>
+                        <button onclick="quickAsk('React component yaz')" class="card-hover p-5 bg-[#1a1a2e] border border-[#2d2d4a] rounded-xl text-left transition-all group">
+                            <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-3 group-hover:bg-cyan-500/30">
+                                <i data-lucide="layout" class="w-5 h-5 text-cyan-400"></i>
+                            </div>
+                            <p class="text-sm font-medium text-white">Frontend</p>
+                            <p class="text-xs text-gray-500 mt-1">React, Vue, HTML/CSS</p>
                         </button>
-                        <button onclick="quickAsk('Soru soracağım')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="help-circle" class="w-5 h-5 text-purple-500 mb-2"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Soru Sor</p>
-                            <p class="text-xs text-gray-500 mt-1">Merak ettiğiniz her şey</p>
+                        <button onclick="quickAsk('REST API tasarla ve implement et')" class="card-hover p-5 bg-[#1a1a2e] border border-[#2d2d4a] rounded-xl text-left transition-all group">
+                            <div class="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center mb-3 group-hover:bg-green-500/30">
+                                <i data-lucide="server" class="w-5 h-5 text-green-400"></i>
+                            </div>
+                            <p class="text-sm font-medium text-white">Backend API</p>
+                            <p class="text-xs text-gray-500 mt-1">Node, Python, Go</p>
                         </button>
-                        <button onclick="quickAsk('Bir rapor hazırla')" class="card-hover p-4 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-xl text-left transition-all">
-                            <i data-lucide="file-text" class="w-5 h-5 text-green-500 mb-2"></i>
-                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">Rapor Hazırla</p>
-                            <p class="text-xs text-gray-500 mt-1">Analiz ve özet</p>
+                        <button onclick="quickAsk('SQL sorgusu optimize et')" class="card-hover p-5 bg-[#1a1a2e] border border-[#2d2d4a] rounded-xl text-left transition-all group">
+                            <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center mb-3 group-hover:bg-orange-500/30">
+                                <i data-lucide="database" class="w-5 h-5 text-orange-400"></i>
+                            </div>
+                            <p class="text-sm font-medium text-white">Veritabanı</p>
+                            <p class="text-xs text-gray-500 mt-1">SQL, NoSQL, optimizasyon</p>
                         </button>
+                    </div>
+                    
+                    <div class="mt-6 flex flex-wrap justify-center gap-2">
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">Python</span>
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">JavaScript</span>
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">TypeScript</span>
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">Java</span>
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">C++</span>
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">Go</span>
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">Rust</span>
+                        <span class="px-3 py-1 text-xs bg-[#1a1a2e] text-gray-400 rounded-full border border-[#2d2d4a]">+50+</span>
                     </div>
                 </div>
             </div>
             
             <!-- Chat Container -->
-            <div id="chatContainer" class="hidden max-w-3xl mx-auto px-6 py-8 space-y-6">
-                <!-- Messages -->
+            <div id="chatContainer" class="hidden max-w-4xl mx-auto px-6 py-8 space-y-6">
             </div>
         </div>
         
         <!-- Input -->
         <div class="shrink-0 px-6 pb-6 pt-2">
-            <div class="max-w-3xl mx-auto">
-                <div class="relative bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg shadow-gray-200/50 dark:shadow-black/50 transition-shadow focus-within:shadow-xl">
+            <div class="max-w-4xl mx-auto">
+                <div class="relative bg-[#1a1a2e] border border-[#2d2d4a] rounded-2xl shadow-lg transition-shadow focus-within:shadow-xl focus-within:border-purple-500/50">
                     <textarea 
                         id="input" 
                         rows="1" 
-                        class="w-full px-5 py-4 pr-14 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 outline-none max-h-40"
-                        placeholder="Mesajınızı yazın..."
+                        class="w-full px-5 py-4 pr-14 bg-transparent text-white placeholder-gray-500 outline-none max-h-48 font-mono"
+                        placeholder="Kod yazmamı istediğiniz şeyi yazın..."
                     ></textarea>
-                    <button id="btnSend" class="absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center bg-gradient-to-br from-[#0881F0] to-[#00D4FF] text-white rounded-xl disabled:opacity-40 disabled:cursor-not-allowed btn" disabled>
+                    <button id="btnSend" class="absolute right-2 bottom-2 w-10 h-10 flex items-center justify-center code-icon text-white rounded-xl disabled:opacity-40 disabled:cursor-not-allowed btn" disabled>
                         <i data-lucide="arrow-up" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <p class="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">RLM 5 ❤️</p>
+                <p class="text-center text-xs text-gray-500 mt-3">RLM 5 ❤️ | Sınırsız Kullanım</p>
             </div>
         </div>
     </main>
@@ -214,7 +292,6 @@
     <script>
         lucide.createIcons();
 
-        // Elements
         const input = document.getElementById('input');
         const btnSend = document.getElementById('btnSend');
         const messages = document.getElementById('messages');
@@ -222,33 +299,17 @@
         const chatContainer = document.getElementById('chatContainer');
         const chatList = document.getElementById('chatList');
         const chatTitle = document.getElementById('chatTitle');
-        const btnThink = document.getElementById('btnThink');
         const btnNewChat = document.getElementById('btnNewChat');
-        const btnTheme = document.getElementById('btnTheme');
         const btnClear = document.getElementById('btnClear');
-        const sidebar = document.getElementById('sidebar');
         const toast = document.getElementById('toast');
 
-        // State
         let history = [];
         let chatId = null;
         let generating = false;
-        let think = true;
         let chats = JSON.parse(localStorage.getItem('rlm_chats') || '{}');
 
-        // Init
-        if (localStorage.theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        }
+        document.documentElement.classList.add('dark');
 
-        // Theme
-        btnTheme.onclick = () => {
-            document.documentElement.classList.toggle('dark');
-            localStorage.theme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-            lucide.createIcons();
-        };
-
-        // New Chat
         btnNewChat.onclick = () => {
             chatId = 'c_' + Date.now();
             history = [];
@@ -262,19 +323,17 @@
             renderChats();
         };
 
-        // Quick Ask
         function quickAsk(text) {
             input.value = text;
             input.dispatchEvent(new Event('input'));
             input.focus();
         }
 
-        // Render Chats
         function renderChats() {
             const ids = Object.keys(chats).sort((a, b) => chats[b].time - chats[a].time);
             
             if (ids.length === 0) {
-                chatList.innerHTML = '<p class="px-3 py-4 text-sm text-gray-400 text-center">Henüz sohbet yok</p>';
+                chatList.innerHTML = '<p class="px-3 py-4 text-sm text-gray-500 text-center">Henüz sohbet yok</p>';
                 lucide.createIcons();
                 return;
             }
@@ -282,10 +341,10 @@
             chatList.innerHTML = ids.map(id => {
                 const c = chats[id];
                 const first = c.msgs.find(m => m.r === 'user');
-                const title = first ? first.c.substring(0, 30) + (first.c.length > 30 ? '...' : '') : 'Yeni Sohbet';
+                const title = first ? first.c.substring(0, 35) + (first.c.length > 35 ? '...' : '') : 'Yeni Sohbet';
                 const active = id === chatId;
                 return `
-                    <button onclick="loadChat('${id}')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors ${active ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}">
+                    <button onclick="loadChat('${id}')" class="w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-colors ${active ? 'bg-purple-500/20 text-purple-400' : 'text-gray-400 hover:bg-[#1a1a2e]'}">
                         <i data-lucide="message-circle" class="w-4 h-4 shrink-0"></i>
                         <span class="flex-1 truncate text-sm">${escapeHtml(title)}</span>
                     </button>
@@ -294,7 +353,6 @@
             lucide.createIcons();
         }
 
-        // Load Chat
         function loadChat(id) {
             chatId = id;
             const c = chats[id];
@@ -311,7 +369,6 @@
             scroll();
         }
 
-        // Save
         function save() {
             if (chatId && history.length) {
                 chats[chatId] = { msgs: history.map(h => ({ r: h.role, c: h.content })), time: Date.now() };
@@ -319,7 +376,6 @@
             }
         }
 
-        // Clear
         btnClear.onclick = () => {
             if (confirm('Tüm sohbetleri sil?')) {
                 chats = {};
@@ -329,23 +385,12 @@
             }
         };
 
-        // Think
-        btnThink.onclick = () => {
-            think = !think;
-            btnThink.classList.toggle('bg-blue-50 dark:bg-blue-900/30', think);
-            btnThink.classList.toggle('text-blue-600 dark:text-blue-400', think);
-            btnThink.classList.toggle('text-gray-500', !think);
-            showToast(think ? 'Deep Think açık' : 'Deep Think kapalı');
-        };
-
-        // Input
         input.oninput = () => {
             input.style.height = 'auto';
-            input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+            input.style.height = Math.min(input.scrollHeight, 192) + 'px';
             btnSend.disabled = !input.value.trim() || generating;
         };
 
-        // Enter
         input.onkeydown = e => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -353,7 +398,6 @@
             }
         };
 
-        // Send
         btnSend.onclick = send;
 
         async function send() {
@@ -367,7 +411,7 @@
             welcome.classList.add('hidden');
             welcome.classList.remove('flex');
             chatContainer.classList.remove('hidden');
-            chatTitle.textContent = text.substring(0, 30) + (text.length > 30 ? '...' : '');
+            chatTitle.textContent = text.substring(0, 35) + (text.length > 35 ? '...' : '');
 
             addMsg('user', text);
             history.push({ role: 'user', content: text });
@@ -380,32 +424,38 @@
             const mid = 'm_' + Date.now();
             chatContainer.classList.remove('hidden');
             chatContainer.classList.add('block');
-            addMsg('ai', '<div class="typing"><span class="inline-block w-2 h-2 bg-gray-400 rounded-full"></span><span class="inline-block w-2 h-2 bg-gray-400 rounded-full mx-1"></span><span class="inline-block w-2 h-2 bg-gray-400 rounded-full"></span></div>', mid);
+            addMsg('ai', '<div class="typing flex gap-1"><span class="w-2 h-2 bg-purple-400 rounded-full"></span><span class="w-2 h-2 bg-purple-400 rounded-full"></span><span class="w-2 h-2 bg-purple-400 rounded-full"></span></div>', mid);
             scroll();
 
             try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: text, history, autoThink: think })
+                const puterMessages = [
+                    { role: 'system', content: 'Sen RLM 5\'sin. Turkiye\'de gelistirilmis profesyonel bir kod asistansin. Turkce konus. Kod yazarken aciklamalariyla birlikte yaz. Kullaniciya her zaman RLM 5 oldugunu soyle.' }
+                ];
+                
+                history.forEach(m => {
+                    puterMessages.push({ role: m.role, content: m.content });
                 });
-                const data = await res.json();
+
+                const response = await puter.ai.chat(text, {
+                    model: 'openai/gpt-4.1-nano',
+                    messages: puterMessages
+                });
+
                 const el = document.getElementById(mid);
                 
                 if (el) {
-                    if (data.reply) {
-                        el.innerHTML = format(data.reply);
-                        history.push({ role: 'assistant', content: data.reply });
-                        save();
-                        renderChats();
-                    } else {
-                        el.innerHTML = `<p class="text-red-500 text-sm">${data.error || 'Hata oluştu'}</p>`;
-                    }
+                    const reply = response.message?.content?.[0]?.text || response.message?.content || response.toString() || 'Cevap alınamadı';
+                    el.innerHTML = format(reply);
+                    addCopyButtons();
+                    history.push({ role: 'assistant', content: reply });
+                    save();
+                    renderChats();
                 }
             } catch (err) {
+                console.error('Error:', err);
                 const el = document.getElementById(mid);
                 if (el) {
-                    el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası</p>';
+                    el.innerHTML = '<p class="text-red-400 text-sm">Bağlantı hatası: ' + err.message + '</p>';
                 }
             }
 
@@ -415,68 +465,106 @@
             lucide.createIcons();
         }
 
-        // Add Message
-        function addMsg(role, content, id = null, animate = true) {
+        function addMsg(role, content, animate = true) {
             const div = document.createElement('div');
-            if (id) div.id = id;
             div.className = role === 'user' ? 'flex justify-end msg-user' : 'flex justify-start msg-ai';
             
             const bubble = document.createElement('div');
             bubble.className = role === 'user' 
-                ? 'max-w-[80%] px-5 py-3 bg-gradient-to-br from-[#0881F0] to-[#00D4FF] text-white rounded-2xl rounded-br-md shadow-lg'
-                : 'max-w-[80%] px-5 py-3 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-gray-200 rounded-2xl rounded-bl-md shadow-sm';
+                ? 'max-w-[85%] px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl rounded-br-md shadow-lg'
+                : 'max-w-[85%] px-5 py-4 bg-[#1a1a2e] border border-[#2d2d4a] text-gray-200 rounded-2xl rounded-bl-md shadow-sm';
             
             if (role === 'ai') {
                 bubble.innerHTML = content;
             } else {
-                bubble.innerHTML = `<p class="text-sm leading-relaxed whitespace-pre-wrap">${escapeHtml(content)}</p>`;
+                bubble.innerHTML = `<p class="text-sm leading-relaxed whitespace-pre-wrap font-mono">${escapeHtml(content)}</p>`;
             }
             
             div.appendChild(bubble);
             chatContainer.appendChild(div);
         }
 
-        // Format
         function format(text) {
             let html = text
-                .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre class="bg-[#1a1a2e] text-[#e4e4e7] p-4 rounded-xl overflow-x-auto my-2"><code>$2</code></pre>')
-                .replace(/`([^`]+)`/g, '<code class="bg-[#e5e7eb] dark:bg-[#374151] px-1.5 py-0.5 rounded text-sm">$1</code>')
-                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+                    const language = lang || detectLanguage(code);
+                    return `
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span class="text-xs text-purple-400 font-semibold uppercase">${language}</span>
+                                <button class="copy-btn" onclick="copyCode(this, \`${escapeHtml(code).replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
+                                    <i data-lucide="copy" class="w-3 h-3 inline mr-1"></i> Kopyala
+                                </button>
+                            </div>
+                            <pre><code>${code.trim()}</code></pre>
+                        </div>
+                    `;
+                })
+                .replace(/`([^`]+)`/g, '<code class="bg-[#2d2d4a] px-1.5 py-0.5 rounded text-sm text-purple-300">$1</code>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong class="text-white">$1</strong>')
                 .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-                .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>')
-                .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
-                .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>')
-                .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc my-1">$1</li>')
-                .replace(/\n\n/g, '</p><p class="mt-2">')
+                .replace(/^### (.+)$/gm, '<h3 class="text-lg font-semibold mt-4 mb-2 text-white">$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2 class="text-xl font-semibold mt-5 mb-2 text-white">$1</h2>')
+                .replace(/^# (.+)$/gm, '<h1 class="text-2xl font-bold mt-5 mb-3 text-white">$1</h1>')
+                .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc my-1 text-gray-300">$1</li>')
+                .replace(/\n\n/g, '</p><p class="mt-2 text-gray-300">')
                 .replace(/\n/g, '<br>');
-            return `<div class="text-sm leading-relaxed text-gray-800 dark:text-gray-200"><p>${html}</p></div>`;
+            return `<div class="text-sm leading-relaxed"><p class="text-gray-300">${html}</p></div>`;
         }
 
-        // Escape
+        function detectLanguage(code) {
+            if (code.includes('import ') && (code.includes('from ') || code.includes('def '))) return 'python';
+            if (code.includes('function ') || code.includes('const ') || code.includes('let ')) return 'javascript';
+            if (code.includes('interface ') || code.includes(': string') || code.includes(': number')) return 'typescript';
+            if (code.includes('public class ') || code.includes('public static void')) return 'java';
+            if (code.includes('#include') || code.includes('int main(')) return 'cpp';
+            if (code.includes('func ') && code.includes('package ')) return 'go';
+            if (code.includes('fn ') && code.includes('let mut')) return 'rust';
+            if (code.includes('SELECT ') || code.includes('INSERT ') || code.includes('CREATE TABLE')) return 'sql';
+            if (code.includes('<html') || code.includes('<div') || code.includes('<!DOCTYPE')) return 'html';
+            return 'code';
+        }
+
+        function copyCode(btn, code) {
+            navigator.clipboard.writeText(code).then(() => {
+                btn.classList.add('copied');
+                btn.innerHTML = '<i data-lucide="check" class="w-3 h-3 inline mr-1"></i> Kopyalandı!';
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i data-lucide="copy" class="w-3 h-3 inline mr-1"></i> Kopyala';
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
+
+        function addCopyButtons() {
+            document.querySelectorAll('.code-block button').forEach(btn => {
+                const codeBlock = btn.closest('.code-block');
+                const code = codeBlock.querySelector('code').textContent;
+                btn.onclick = () => copyCode(btn, code);
+            });
+        }
+
         function escapeHtml(t) {
             const d = document.createElement('div');
             d.textContent = t;
             return d.innerHTML;
         }
 
-        // Scroll
         function scroll() {
             messages.scrollTop = messages.scrollHeight;
         }
 
-        // Toast
         function showToast(msg) {
             const t = document.createElement('div');
-            t.className = 'toast px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl shadow-lg text-sm font-medium';
+            t.className = 'toast px-4 py-3 bg-[#2d2d4a] text-white rounded-xl shadow-lg text-sm font-medium';
             t.textContent = msg;
             toast.appendChild(t);
             setTimeout(() => t.remove(), 3000);
         }
 
-        // Init
         renderChats();
-
-        console.log('%c RLM 5 ', 'background: linear-gradient(135deg, #0881F0, #00D4FF); color: white; font-size: 20px; padding: 10px 20px; border-radius: 10px;');
     </script>
 </body>
 </html>
