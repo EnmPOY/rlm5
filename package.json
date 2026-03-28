@@ -1,0 +1,9 @@
+{
+  "name": "rlm5",
+  "version": "1.0.0",
+  "description": "RLM 5 - Türkçe AI Asistan",
+  "main": "api/chat.js",
+  "scripts": {
+    "start": "vercel dev"
+  }
+}
