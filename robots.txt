@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Allow important files
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.woff2$
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+
+# Disallow API endpoints
+Disallow: /api/
+
+# Sitemap
+Sitemap: https://rlm5.vercel.app/sitemap.xml
+
+# Crawl delay (be nice to the server)
+Crawl-delay: 1
