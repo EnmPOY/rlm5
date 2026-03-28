@@ -964,91 +964,148 @@ async function analyzeWebsite(url) {
     
     let html = '';
     let bypassMethod = '';
+    let extraInfo = {};
     
-    // 1. Direkt erisim
-    try {
-        const response = await fetch(url, {
-            headers: getBrowserHeaders(),
-            signal: AbortSignal.timeout(12000)
-        });
-        if (response.ok) {
-            html = await response.text();
-            if (html.includes('<!DOCTYPE') || html.includes('<html')) {
-                bypassMethod = 'Direkt';
+    // Tum yontemleri dene
+    const fetchMethods = [
+        // 1. Direkt
+        async () => {
+            const response = await fetch(url, { headers: getBrowserHeaders(), signal: AbortSignal.timeout(15000) });
+            if (response.ok) {
+                const text = await response.text();
+                if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                    extraInfo.status = response.status;
+                    extraInfo.contentType = response.headers.get('content-type');
+                    return { html: text, method: 'Direkt' };
+                }
             }
+            return null;
+        },
+        // 2. Google Cache
+        async () => {
+            const response = await fetch(`https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(10000) });
+            if (response.ok) {
+                const text = await response.text();
+                if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                    return { html: text, method: 'Google Cache' };
+                }
+            }
+            return null;
+        },
+        // 3. Wayback
+        async () => {
+            const response = await fetch(`https://web.archive.org/web/2024/${url}`, { signal: AbortSignal.timeout(10000) });
+            if (response.ok) {
+                const text = await response.text();
+                if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                    return { html: text, method: 'Wayback' };
+                }
+            }
+            return null;
+        },
+        // 4. Bing Cache
+        async () => {
+            const response = await fetch(`https://cc.bingj.com/cache.aspx?q=${encodeURIComponent(url)}&d=0`, { signal: AbortSignal.timeout(10000) });
+            if (response.ok) {
+                const text = await response.text();
+                if (text.includes('<!DOCTYPE') || text.includes('<html')) {
+                    return { html: text, method: 'Bing Cache' };
+                }
+            }
+            return null;
+        },
+        // 5. Textise
+        async () => {
+            const response = await fetch(`https://lite.textise.net/?url=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+            if (response.ok) {
+                const text = await response.text();
+                if (text.length > 200) {
+                    return { html: `<html><body><pre>${text}</pre></body></html>`, method: 'Textise' };
+                }
+            }
+            return null;
+        },
+        // 6. Textise dot iitty
+        async () => {
+            const response = await fetch(`https://textise.net/showtext.aspx?strURL=${encodeURIComponent(url)}`, { signal: AbortSignal.timeout(8000) });
+            if (response.ok) {
+                const text = await response.text();
+                if (text.length > 200) {
+                    return { html: `<html><body><pre>${text}</pre></body></html>`, method: 'Textise.net' };
+                }
+            }
+            return null;
         }
-    } catch (e) {}
+    ];
     
-    // 2. Google Cache
-    if (!html || html.length < 500) {
+    for (const method of fetchMethods) {
         try {
-            const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
-            const response = await fetch(cacheUrl, {
-                headers: { 'User-Agent': 'Mozilla/5.0' },
-                signal: AbortSignal.timeout(8000)
-            });
-            if (response.ok) {
-                const cacheHtml = await response.text();
-                if (cacheHtml.includes('<!DOCTYPE') || cacheHtml.includes('<html')) {
-                    html = cacheHtml;
-                    bypassMethod = 'Google Cache';
-                }
-            }
-        } catch (e) {}
-    }
-    
-    // 3. Wayback Machine
-    if (!html || html.length < 500) {
-        try {
-            const waybackUrl = `https://web.archive.org/web/2024/${url}`;
-            const response = await fetch(waybackUrl, {
-                headers: { 'User-Agent': 'Mozilla/5.0' },
-                signal: AbortSignal.timeout(8000)
-            });
-            if (response.ok) {
-                const waybackHtml = await response.text();
-                if (waybackHtml.includes('<!DOCTYPE') || waybackHtml.includes('<html')) {
-                    html = waybackHtml;
-                    bypassMethod = 'Wayback Machine';
-                }
+            const result = await method();
+            if (result && result.html && result.html.length > 500) {
+                html = result.html;
+                bypassMethod = result.method;
+                break;
             }
         } catch (e) {}
     }
     
     if (!html || html.length < 500) {
-        return `SITE ANALIZI: ${url}\n\nDurum: Siteye erisilemedi\n\nManuel kontrol icin:\n- https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}\n- https://web.archive.org/web/*/${url.replace('https://', '')}`;
+        return `SITE ANALIZI\nURL: ${url}\n\nDurum: Siteye erisilemedi\n\nManuel kontrol icin:\n- https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}\n- https://web.archive.org/web/*/${url.replace('https://', '')}`;
     }
     
-    // Yeni gelismis icerik cekme
     const content = extractContentAdvanced(html, bypassMethod, url);
     
     let report = '';
     report += `SITE ANALIZI\n`;
     report += `URL: ${url}\n`;
-    report += `Kaynak: ${bypassMethod}\n`;
+    report += `Yontem: ${bypassMethod}\n`;
+    if (extraInfo.status) report += `Durum: ${extraInfo.status}\n`;
     report += `================================\n\n`;
     
-    // Meta bilgileri
-    report += `META BILGILER:\n`;
+    // Site adi
+    const siteName = extractMeta(html, 'og:site_name') || new URL(url).hostname.replace('www.', '');
+    report += `Site Adi: ${siteName}\n`;
+    
+    // Meta
+    report += `\nMETA BILGILER:\n`;
     report += `Baslik: ${content.title || 'Yok'}\n`;
-    report += `Aciklama: ${content.description || 'Yok'}\n\n`;
+    report += `Aciklama: ${content.description || 'Yok'}\n`;
+    
+    // Resim
+    const ogImage = extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image');
+    if (ogImage) report += `Resim: ${ogImage}\n`;
+    
+    // Favicon
+    const favicon = html.match(/<link[^>]*rel=["'](?:icon|shortcut icon)["'][^>]*href=["']([^"']+)["']/i)?.[1] ||
+                   html.match(/<link[^>]*href=["']([^"']+\.ico)["'][^>]*rel=["'](?:icon|shortcut icon)["']/i)?.[1] || '';
+    if (favicon) report += `Icon: ${favicon}\n`;
     
     // Basliklar
     if (content.headings.length > 0) {
-        report += `BASLIKLAR:\n`;
-        report += content.headings.slice(0, 5).map((h, i) => `${i + 1}. ${h}`).join('\n');
-        report += '\n\n';
+        report += `\nBASLIKLAR:\n`;
+        content.headings.slice(0, 5).forEach((h, i) => {
+            report += `${i + 1}. ${h}\n`;
+        });
     }
     
-    // Teknolojiler
-    report += `TEKNOLOJILER:\n`;
+    // Sosyal
+    report += `\nSOSYAL MEDYA:\n`;
+    report += `Facebook OG: ${extractMeta(html, 'og:type') ? 'Var' : 'Yok'}\n`;
+    report += `Twitter Card: ${extractMeta(html, 'twitter:card') || 'Yok'}\n`;
+    
+    // Teknoloji
+    report += `\nTEKNOLOJILER:\n`;
     const techs = detectTech(html);
-    report += (techs.length > 0 ? techs.join(', ') : 'Belirlenemedi') + '\n\n';
+    report += (techs.length > 0 ? techs.join(', ') : 'Belirlenemedi') + '\n';
     
     // Icerik
-    report += `ICERIK (${content.text.length} karakter):\n`;
+    report += `\nICERIK:\n`;
     report += `================================\n`;
-    report += content.text.substring(0, 3500);
+    if (content.text && content.text.length > 100) {
+        report += content.text.substring(0, 4000);
+    } else {
+        report += 'Icerik cikaramadi. Site dinamik olabilir veya JavaScript gerektiriyor.\n';
+    }
     
     return report;
 }
