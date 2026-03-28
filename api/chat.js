@@ -13,18 +13,17 @@ module.exports = async function handler(req, res) {
     }
 
     const { message, history = [], autoThink = true } = req.body;
-    const hfToken = process.env.HF_TOKEN;
+    const apiKey = process.env.OPENROUTER_API_KEY;
 
-    if (!hfToken) {
-        return res.status(500).json({ error: 'Sunucu Hatası: HF_TOKEN tanımlanmamış.' });
+    if (!apiKey) {
+        return res.status(500).json({ error: 'Sunucu Hatası: API key tanımlanmamış.' });
     }
     if (!message || message.trim() === '') {
         return res.status(400).json({ error: 'Mesaj boş olamaz.' });
     }
 
-    const AI_NAME = 'RLM 5';
-    const API_URL = 'https://router.huggingface.co/v1/chat/completions';
-    const MODEL = 'MiniMaxAI/MiniMax-M2.5';
+    const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+    const MODEL = 'minimax/minimax-m2.5';
     
     const systemPrompt = `Sen RLM 5'sin. Turkiye'de gelistirilmis gelismis bir yapay zeka asistansin. Turkce konus. Kullaniciya RLM 5 oldugunu soyle, kurucu bilgisi sorulursa Troye ekibi de. Kendini AI model, MiniMax, Claude, Qwen vb. olarak tanitma. Sik, faydali ve dogru cevaplar ver.`;
 
@@ -45,8 +44,10 @@ module.exports = async function handler(req, res) {
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${hfToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'HTTP-Referer': 'https://rlm5.vercel.app',
+                'X-Title': 'RLM 5'
             },
             body: JSON.stringify({
                 model: MODEL,
