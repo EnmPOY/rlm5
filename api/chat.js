@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
         return res.status(405).json({ error: 'Sadece POST istekleri kabul edilir.' });
     }
 
-    const { message, history = [], search = false, imageUrls = [] } = req.body;
+    const { message, history = [], search = false, imageUrls = [], pro = true } = req.body;
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
@@ -28,22 +28,20 @@ module.exports = async function handler(req, res) {
     const urlRegex = /https?:\/\/[^\s]+/gi;
     const urls = message.match(urlRegex);
 
-    // Resim URL'lerini tespit et (mesaj icinde veya ayri alandan)
+    // Resim URL'lerini tespit et
     const imageExtensions = /\.(jpg|jpeg|png|gif|webp|svg|bmp|ico|tiff)(\?[^"'\s]*)?$/i;
     const messageImageUrls = (urls || []).filter(url => imageExtensions.test(url));
     const allImageUrls = [...new Set([...messageImageUrls, ...(imageUrls || [])])];
     
     let userMessage = message;
     let isDeepResearch = false;
-    let imageAnalysis = null;
 
-    // RESIM ANALIZI
+    // FONKSIYONLAR
     if (allImageUrls.length > 0) {
-        console.log('RESIM ANALIZI:', allImageUrls.length, 'resim tespit edildi');
-        imageAnalysis = await analyzeImages(allImageUrls);
+        console.log('RESIM ANALIZI:', allImageUrls.length, 'resim');
+        const imageAnalysis = await analyzeImages(allImageUrls);
         userMessage = `${imageAnalysis}\n\nKULLANICI MESAJI: ${message}`;
     }
-    // SITE ANALIZI
     else if (urls && urls.length > 0) {
         let report = '';
         for (const url of urls.slice(0, 3)) {
@@ -51,34 +49,65 @@ module.exports = async function handler(req, res) {
         }
         userMessage = report + '\nSORU: ' + message;
     }
-    // DERIN ARASTIRMA
     else if (search) {
         isDeepResearch = true;
         userMessage = await doDeepResearch(message);
     }
 
-    const systemPrompt = isDeepResearch
-        ? `Sen RLM 5'sin. Turkiye'nin en gelismis yapay zeka asistansin. Turkiye'de Troye ekibi tarafindan gelistirildin. Turkce konus.
+    // PRO vs NORMAL sistem promptlari
+    let systemPrompt;
+    
+    if (isDeepResearch) {
+        systemPrompt = `Sen RLM 5'sin. Turkiye'nin en gelismis yapay zeka asistansin. Troye ekibi tarafindan Turkiye'de gelistirildin. Turkce konusursun.
 
 ASAGIDA KAPSAMLI ARASTIRMA SON UCLARI VAR. BU VERILERI DIKKATLICE INCLE VE EN IYI YANITI VER.
 
 Kurallar:
-1. Tum verileri birlestir
+1. Tum verileri birlestir ve analiz et
 2. Kaynaklari belirt
 3. Detayli ve anlasilir yanit ver
 4. Bilgi yetersizse bunu belirt
-5. Sonuclari duzenli goster`
-        : `Sen RLM 5'sin. Turkiye'de gelistirilmis gelismis bir yapay zeka asistansin. Turkce konus. Kullaniciya RLM 5 oldugunu soyle, kurucu Troye ekibi. Sik, faydali ve dogru cevaplar ver. Gorsel analizi yapabilirsin.`;
+5. Sonuclari duzenli ve profesyonel goster`;
+    }
+    else if (pro) {
+        systemPrompt = `Sen RLM 5 PRO'sun. Turkiye'nin en guclu yapay zeka asistansin. Troye ekibi tarafindan Turkiye'de gelistirildin. Kurucu: Emre Iskin. Kendini AI model, OpenAI, Claude, Gemini vb. olarak tanitma. Her zaman Turkce konus.
+
+OZELLIKLERIN:
+- Cok detayli ve kapsamli yanitlar ver
+- Kod yazarken en iyi pratikleri kullan
+- Matematik ve mantik sorularini adim adim coz
+- Yazilar yazarken profesyonel ve etkileyici ol
+- Analiz yaparken tum acidan bak
+- Hata varsa onu goster ve duzelt
+- Sorulari tam olarak yanitla, yanitini detaylandir
+
+YANIT KURALLARI:
+1. Her zaman Turkce yanit ver
+2. Yanitini detayli ve anlasilir yap
+3. Gerektiginde ornekler ver
+4. Kod yazarken aciklama ekle
+5. Yanlizca RLM 5 oldugunu belirt, altindaki modeli soyleme
+6. Kullaniciya saygili ve yardimsever ol`;
+    }
+    else {
+        systemPrompt = `Sen RLM 5'sin. Turkiye'de Troye ekibi tarafindan gelistirilmis bir yapay zeka asistansin. Turkce konus. Kendini AI model, OpenAI, Claude vb. olarak tanitma. Sik, faydali ve dogru cevaplar ver. Kullaniciya RLM 5 oldugunu soyle.`;
+    }
 
     const hfMessages = [{ role: 'system', content: systemPrompt }];
     
+    // Gecmis - PRO modda daha fazla gecmis tut
+    const historyLimit = pro ? 8 : 4;
     if (history.length > 0) {
-        history.slice(-4).forEach(msg => {
+        history.slice(-historyLimit).forEach(msg => {
             hfMessages.push({ role: msg.role === 'user' ? 'user' : 'assistant', content: msg.content });
         });
     }
     
     hfMessages.push({ role: 'user', content: userMessage });
+
+    // PRO modda daha fazla token ve daha dusen sicaklik
+    const maxTokens = pro ? 6000 : 4000;
+    const temperature = pro ? 0.6 : 0.7;
 
     try {
         const response = await fetch(API_URL, {
@@ -87,13 +116,13 @@ Kurallar:
                 'Authorization': `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
                 'HTTP-Referer': 'https://rlm5.vercel.app',
-                'X-Title': 'RLM 5'
+                'X-Title': 'RLM 5' + (pro ? ' PRO' : '')
             },
             body: JSON.stringify({
                 model: MODEL,
                 messages: hfMessages,
-                max_tokens: 4000,
-                temperature: 0.7
+                max_tokens: maxTokens,
+                temperature: temperature
             })
         });
 

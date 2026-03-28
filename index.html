@@ -165,6 +165,11 @@
             <div class="max-w-3xl mx-auto">
                 <div class="relative bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg transition-shadow focus-within:shadow-xl focus-within:border-[#0881F0]">
                     <div class="flex items-center gap-2 px-3 pt-2">
+                        <!-- Pro/Normal Mode Toggle -->
+                        <button id="btnPro" onclick="togglePro()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 text-amber-600 dark:text-amber-400 hover:from-amber-200 hover:to-orange-200">
+                            <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                            <span id="proLabel">PRO</span>
+                        </button>
                         <button id="btnSearch" onclick="toggleSearch()" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-all bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700">
                             <i data-lucide="globe" class="w-3.5 h-3.5"></i>
                             <span>Araştır</span>
@@ -220,6 +225,7 @@
         let chatId = null;
         let generating = false;
         let searchEnabled = false;
+        let proEnabled = true;
         let chats = JSON.parse(localStorage.getItem('rlm_chats') || '{}');
 
         if (localStorage.theme === 'dark') document.documentElement.classList.add('dark');
@@ -228,6 +234,26 @@
             sidebar.classList.toggle('-translate-x-full');
             sidebar.classList.toggle('sidebar-open');
             overlay.classList.toggle('active');
+        }
+
+        function togglePro() {
+            proEnabled = !proEnabled;
+            const btn = document.getElementById('btnPro');
+            const label = document.getElementById('proLabel');
+            if (proEnabled) {
+                btn.classList.add('bg-gradient-to-r', 'from-amber-100', 'to-orange-100', 'dark:from-amber-900/30', 'dark:to-orange-900/30');
+                btn.classList.remove('bg-gray-100', 'dark:bg-gray-800');
+                btn.classList.add('text-amber-600', 'dark:text-amber-400');
+                btn.classList.remove('text-gray-600', 'dark:text-gray-400');
+                label.textContent = 'PRO';
+            } else {
+                btn.classList.remove('bg-gradient-to-r', 'from-amber-100', 'to-orange-100', 'dark:from-amber-900/30', 'dark:to-orange-900/30');
+                btn.classList.add('bg-gray-100', 'dark:bg-gray-800');
+                btn.classList.remove('text-amber-600', 'dark:text-amber-400');
+                btn.classList.add('text-gray-600', 'dark:text-gray-400');
+                label.textContent = 'NORMAL';
+            }
+            showToast(proEnabled ? 'PRO modu aktif' : 'Normal mod aktif');
         }
 
         btnTheme.onclick = () => {
@@ -433,7 +459,8 @@
                         message: text, 
                         history, 
                         search: searchEnabled,
-                        imageUrls: imageUrls
+                        imageUrls: imageUrls,
+                        pro: proEnabled
                     })
                 });
                 const data = await res.json();
