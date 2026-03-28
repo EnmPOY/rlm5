@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="tr" class="light">
+<head>
+    <meta charset="utf-8">
+    <link rel="icon" type="image/png" sizes="512x512" href="https://z-cdn.chatglm.cn/z-ai/static/logo.svg">
+    <link rel="shortcut icon" href="https://z-cdn.chatglm.cn/z-ai/static/logo.svg">
+    <link rel="apple-touch-icon" sizes="512x512" href="https://z-cdn.chatglm.cn/z-ai/static/logo.svg">
+    <meta name="apple-mobile-web-app-title" content="RLM 5 - G63 AI Assistant">
+    <meta name="description" content="Meet RLM 5, your advanced AI-powered assistant. Build websites, create slides, analyze data, and get instant answers. Fast, smart, and reliable, powered by GLM-5.">
+    <meta name="keywords" content="RLM-5, RLM 5, G63 AI, AI chat, chatbot, free ai chat, AI assistant, AI coding, AI writer, AI presentation maker">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#F4F6F8">
+    <title>RLM 5 - G63 AI Assistant</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --bg-main: #f8f8f8;
+            --sidebar-bg: #f9f9f9;
+            --accent-blue: #0881F0;
+            --border-color: #DBDBDB;
+            --text-primary: #1B1818;
+            --text-secondary: #666;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-main); 
+            overflow: hidden; 
+        }
+        
+        .dark {
+            --bg-main: #161616;
+            --sidebar-bg: #1E1E1E;
+            --border-color: #434343;
+            --text-primary: #fff;
+            --text-secondary: #999;
+        }
+
+        /* Gradient Yazı Tipi */
+        .textGradient {
+            background: linear-gradient(90deg, #0881F0 0%, #00D4FF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+
+        /* Kod Blokları İçin Stil */
+        pre { 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+            padding: 1rem; 
+            border-radius: 8px; 
+            font-family: 'Fira Code', monospace; 
+            font-size: 14px; 
+            overflow-x: auto; 
+            margin: 10px 0; 
+        }
+
+        /* Mesaj Balonları Animasyonu */
+        .message-fade { animation: fadeInUp 0.3s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar Gizleme */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Yükleniyor Noktaları */
+        .dot { animation: dot-pulse 1.5s infinite; }
+        @keyframes dot-pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+
+        /* Sidebar Geçişi */
+        #sidebar { transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        /* Z Letter Background */
+        .placeholder-z-letter {
+            position: absolute;
+            left: 50%;
+            top: -176px;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+        /* Input Container */
+        .messageInputContainer {
+            position: relative;
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        /* Model Selector Button */
+        .modelSelectorButton {
+            background: transparent;
+            border: none;
+            padding: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Gradient Button */
+        .gradientButton {
+            background: linear-gradient(135deg, #0881F0 0%, #00D4FF 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gradientButton:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(8, 129, 240, 0.3);
+        }
+
+        /* Send Button */
+        .sendMessageButton {
+            background: #E0E0E0;
+            color: rgba(17, 15, 15, 0.2);
+            border: none;
+            padding: 0.375rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .sendMessageButton:not(:disabled) {
+            background: var(--accent-blue);
+            color: white;
+        }
+
+        .sendMessageButton:not(:disabled):hover {
+            background: #0670d0;
+        }
+    </style>
+</head>
+<body class="text-stone-950 dark:text-white bg-[#f8f8f8] dark:bg-[#161616] h-screen max-h-[100dvh] overflow-auto flex flex-row justify-end">
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="h-screen max-h-[100dvh] min-h-screen select-none relative z-50 top-0 left-0 flex flex-row" data-state="false" data-collapsed="true" data-subpanel="false" data-mobile="false">
+        <div class="flex flex-col h-full transition-width duration-200 ease-in-out shrink-0 bg-[#f9f9f9] text-gray-900 dark:bg-[#1E1E1E] dark:text-gray-200 text-sm border-r border-black/15 dark:border-white/12 overflow-x-hidden data-[collapsed=false]:w-[264px] data-[collapsed=false]:max-w-[264px] data-[mobile=false]:data-[collapsed=true]:w-[52px] data-[mobile=true]:data-[collapsed=true]:w-0 data-[collapsed=true]:cursor-pointer" data-state="false" data-collapsed="true" data-mobile="false" tabindex="0" role="button">
+            <div class="flex flex-col items-center">
+                <button class="group relative mx-3.5 my-4.5 size-6" onclick="toggleSidebar()">
+                    <div class="logoIcon absolute inset-0 m-auto size-6 bg-[url(https://z-cdn.chatglm.cn/z-ai/static/logo.svg)] bg-contain bg-no-repeat opacity-100 transition-opacity duration-150 delay-150 group-hover:delay-0 group-hover:opacity-0"></div>
+                    <div class="expandIcon p-1 absolute inset-0 m-auto h-fit w-fit opacity-0 transition-opacity duration-150 delay-0 group-hover:delay-150 group-hover:opacity-100 hover:bg-[#0d0d0d]/4 dark:hover:bg-white/10 rounded-sm">
+                        <svg class="size-4 text-black dark:text-white rotate-180" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 2V14M5.2 2H10.8C11.9201 2 12.4802 2 12.908 2.21799C13.2843 2.40973 13.5903 2.71569 13.782 3.09202C14 3.51984 14 4.0799 14 5.2V10.8C14 11.9201 14 12.4802 13.782 12.908C13.5903 13.2843 13.2843 13.5903 12.908 13.782C12.4802 14 11.9201 14 10.8 14H5.2C4.07989 14 3.51984 14 3.09202 13.782C2.71569 13.5903 2.40973 13.2843 2.21799 12.908C2 12.4802 2 11.9201 2 10.8V5.2C2 4.07989 2 3.51984 2.21799 3.09202C2.40973 2.71569 2.71569 2.40973 3.09202 2.21799C3.51984 2 4.0799 2 5.2 2Z" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </div>
+                </button>
+                <div class="px-1.5 flex flex-col items-center">
+                    <div class="px-2.5 py-2">
+                        <button data-scene="chat" class="rounded p-2 hover:bg-[#0d0d0d]/4 dark:hover:bg-white/10 data-[active=true]:bg-[#0d0d0d]/4 dark:data-[active=true]:bg-black/10">
+                            <i data-lucide="message-circle" class="size-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div data-sidebar="false" data-mobile="false" class="h-screen max-h-[100dvh] transition-width duration-200 ease-in-out data-[sidebar=true]:max-w-[calc(100%-264px)] data-[sidebar=false]:max-w-[calc(100%-52px)] data-[mobile=true]:data-[sidebar=false]:max-w-full w-full max-w-full flex" id="chat-container">
+        <div class="h-full flex-1 flex flex-col max-w-full">
+            
+            <!-- Navigation -->
+            <nav class="sticky top-0 z-30 w-full bg-[#f8f8f8] dark:bg-[#161616] px-5 py-3.5 -mb-8 flex items-center">
+                <div class="pointer-events-none absolute inset-0 -bottom-7 z-[-1]"></div>
+                <div class="flex px-1 mx-auto w-full max-w-full bg-transparent">
+                    <div class="flex gap-2 justify-between items-center w-full max-w-full">
+                        <div class="flex gap-1" hidden="">
+                            <div class="self-start flex flex-none p-1 items-center rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-850 transition">
+                                <div aria-label="Chat History" class="flex">
+                                    <button id="sidebar-toggle-button" class="flex cursor-pointer" aria-label="Toggle Sidebar" onclick="toggleSidebar()">
+                                        <div class="self-center">
+                                            <i data-lucide="panel-left" class="size-4 text-black dark:text-white"></i>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                            <div aria-label="New Chat" class="flex">
+                                <button id="new-chat-button" class="navNewChat flex cursor-pointer rounded-xl p-1 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-850 transition" aria-label="New Chat" onclick="newChat()">
+                                    <div class="self-center m-auto">
+                                        <i data-lucide="plus" class="size-4 text-black dark:text-white"></i>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                        <div data-mobile="false" class="flex-1 overflow-hidden max-w-full py-0.5">
+                            <div class="flex flex-col items-start w-full">
+                                <div class="flex justify-between items-center w-full">
+                                    <div class="flex overflow-hidden">
+                                        <div class="flex flex-col mr-1">
+                                            <button aria-controls="model-selector" aria-expanded="false" data-state="closed" id="model-selector-rlm5-button" tabindex="0" class="modelSelectorButton relative font-primary" aria-label="Select a model">
+                                                <div class="flex text-left px-0.5 outline-hidden bg-transparent truncate text-black dark:text-white text-lg justify-between font-medium placeholder-gray-400 focus:outline-hidden">
+                                                    RLM-5 
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="self-center ml-2 size-3">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"></path>
+                                                    </svg>
+                                                </div>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2 items-center">
+                                        <button aria-controls="api-menu" aria-expanded="false" data-state="closed" id="api-button" tabindex="0">
+                                            <button class="flex items-center font-mono font-medium text-white whitespace-nowrap rounded-lg gradientButton tracking-wider h-7 self-start">
+                                                <span>API</span>
+                                                <svg class="text-black rotate-45 size-4 dark:text-white" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" stroke-width="2" fill="currentColor">
+                                                    <path d="M512 853.333333c-25.6 0-42.666667-17.066667-42.666667-42.666666V213.333333c0-25.6 17.066667-42.666667 42.666667-42.666666s42.666667 17.066667 42.666667 42.666666v597.333334c0 25.6-17.066667 42.666667-42.666667 42.666666z"></path>
+                                                    <path d="M810.666667 554.666667c-12.8 0-21.333333-4.266667-29.866667-12.8L512 273.066667l-268.8 268.8c-17.066667 17.066667-42.666667 17.066667-59.733333 0s-17.066667-42.666667 0-59.733334l298.666666-298.666666c17.066667-17.066667 42.666667-17.066667 59.733334 0l298.666666 298.666666c17.066667 17.066667 17.066667 42.666667 0 59.733334-8.533333 8.533333-17.066667 12.8-29.866666 12.8z"></path>
+                                                </svg>
+                                            </button>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-none gap-2 items-center self-start text-black dark:text-white">
+                            <button aria-controls="user-menu" aria-expanded="false" data-state="closed" id="user-menu-button" tabindex="0">
+                                <button class="flex w-full rounded-xl transition select-none hover:bg-gray-50 dark:hover:bg-gray-850" aria-label="User Menu">
+                                    <div class="self-center">
+                                        <div class="size-8 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-xs shadow-sm">G63</div>
+                                    </div>
+                                </button>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Chat Window -->
+            <div class="flex overflow-y-scroll flex-col w-full h-full scrollbar-none">
+                <div id="chatWindow" class="m-auto w-full min-h-[384px] mt-20 max-w-full px-2 @2xl:px-20 translate-y-6 text-center relative">
+                    
+                    <!-- Welcome Screen -->
+                    <div id="welcomeScreen" class="flex flex-col gap-13 justify-center items-center">
+                        <!-- Z Letter Background -->
+                        <div class="placeholder-z-letter" aria-hidden="true">
+                            <svg width="400" height="320" viewBox="0 0 400 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M398.97 0.5L147.576 319.5H1.03027L37.5996 273.081L120.167 169.603L120.171 169.598L215.342 47.5605L215.343 47.5615L252.424 0.5H398.97ZM264.544 273.271H372.527L336.082 319.498H189.886L202.642 303.307C217.584 284.34 240.398 273.271 264.544 273.271ZM209.164 0.5L202.786 8.58887C183.782 32.6885 154.782 46.752 124.091 46.752H25.9805L62.4268 0.5H209.164Z" stroke="url(#paint0_linear_56_1795)"></path>
+                                <defs>
+                                    <linearGradient id="paint0_linear_56_1795" x1="200" y1="31.5" x2="200" y2="320" gradientUnits="userSpaceOnUse">
+                                        <stop stop-color="#DBDBDB"></stop>
+                                        <stop offset="1" stop-color="#F8F8F8"></stop>
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                        </div>
+
+                        <!-- Welcome Text -->
+                        <div class="flex gap-4 items-center w-full text-3xl text-center text-gray-800 dark:text-gray-100 font-primary relative z-[1]">
+                            <div class="w-full flex flex-col gap-13 justify-center items-center">
+                                <div class="flex flex-col gap-4 items-center text-[#1B1818] dark:text-gray-100 text-center w-full">
+                                    <p class="leading-none text-[40px] @xl:text-[52px] tracking-[-0.04em]">
+                                        <span>Merhaba,</span> 
+                                        <span class="textGradient">G63</span>
+                                    </p>
+                                    <p class="font-normal text-base leading-[1.25] text-[#1b1818] dark:text-gray-400">
+                                        RLM 5 ile sınırsız yaratıcı dünyayı keşfet
+                                    </p>
+                                </div>
+
+                                <!-- Input Container -->
+                                <div class="relative w-full max-w-[792px] mx-auto overflow-visible messageInputContainer">
+                                    <div class="w-full messageInputContainer font-primary">
+                                        <div class="flex inset-x-0 justify-center mx-auto bg-transparent max-w-[960px]">
+                                            <div class="flex flex-col max-w-6xl w-full">
+                                                <div class="relative"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div data-outline-control="true" data-im-status="false" class="max-w-[960px] mx-auto inset-x-0 data-[outline-control=true]:border data-[outline-control=true]:border-[#DBDBDB]/60 data-[outline-control=true]:dark:border-[#434343]/30 data-[outline-control=true]:bg-[#F8F8F8] data-[outline-control=true]:dark:bg-[#1E1E1E] data-[outline-control=true]:rounded-2xl data-[outline-control=true]:p-[3px] data-[outline-control=true]:text-[#0D0D0D]/80 data-[outline-control=true]:dark:text-white/80">
+                                                <div class="flex px-3 mb-1 items-center text-nowrap">
+                                                    <span class="leading-6 text-[13px] font-medium text-nowrap mr-1">Sohbet:</span>
+                                                    <span class="leading-6 text-xs truncate min-w-0">Anında yanıt, interaktif sohbet, hafif teslimat</span>
+                                                </div>
+                                                <div class="relative flex flex-col">
+                                                    <form class="flex gap-1.5 w-full">
+                                                        <div class="flex-1 flex flex-col relative w-full rounded-xl border border-[#0000001F] dark:border-white/10 transition bg-white/90 dark:bg-[#292929] dark:text-gray-100 shadow-[0px_4px_16px_0px_#0000000D]">
+                                                            <div class="overflow-hidden relative py-3 px-1">
+                                                                <textarea id="chat-input" dir="auto" rows="2" class="w-full text-sm bg-transparent resize-none overflow-x-hidden dark:text-gray-100 outline-hidden dark:placeholder:text-white/40 max-h-[216px]" placeholder="Bugün size nasıl yardımcı olabilirim?" style="text-indent: 0px;"></textarea>
+                                                            </div>
+                                                            <div class="flex justify-between items-center p-3 max-w-full border-[#DBDBDB]/60 dark:border-[#434343]" dir="ltr">
+                                                                <div class="self-end flex items-center flex-1 max-w-[80%] gap-2">
+                                                                    <div aria-label="Up to 10 files, Max 50 MB per file" class="flex">
+                                                                        <div role="button" tabindex="0" class="text-[0px]">
+                                                                            <button id="upload-file-button" class="rounded-lg bg-transparent transition p-2 outline-hidden focus:outline-hidden hover:bg-gray-100 text-gray-800 dark:text-white dark:hover:bg-gray-800" type="button" aria-label="More">
+                                                                                <svg class="size-3" width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                                                    <path d="M4.33329 0.666992V8.00033M0.666626 4.33366H7.99996" stroke="currentColor" stroke-width="1.33" stroke-linecap="round" stroke-linejoin="round"></path>
+                                                                                </svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="flex gap-2 items-center overflow-x-auto scrollbar-none flex-1">
+                                                                        <button aria-describedby="web-search-tooltip" id="web-search-btn" data-state="closed" type="button">
+                                                                            <button type="button" class="flex items-center text-sm p-1.5 rounded-md transition-colors duration-300 focus:outline-hidden max-w-full overflow-hidden disabled:cursor-not-allowed disabled:hover:bg-none disabled:text-gray-500 dark:text-white/80 bg-[#F0F7FE] dark:bg-white/10 text-[#0881F0] dark:text-white">
+                                                                                <i data-lucide="globe" class="size-4" stroke-width="1.33"></i>
+                                                                            </button>
+                                                                        </button>
+                                                                        <div aria-label="Deep think enabled" class="flex">
+                                                                            <button data-autothink="true" id="think-btn" class="flex items-center p-1.5 text-sm rounded-md data-[autoThink=true]:text-[#0881F0] data-[autoThink=true]:bg-[#F0F7FE] data-[autoThink=false]:hover:bg-black/5 data-[autoThink=false]:dark:hover:bg-white/5 bg-transparent transition-all disabled:cursor-not-allowed disabled:hover:bg-none disabled:text-gray-500 dark:text-white/80 data-[autoThink=true]:dark:bg-white/10 data-[autoThink=true]:dark:text-white whitespace-nowrap">
+                                                                                <i data-lucide="brain" class="size-4" stroke-width="1.33"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="flex self-end space-x-1 shrink-0">
+                                                                    <div class="flex items-center">
+                                                                        <div aria-label="Send Message" class="flex">
+                                                                            <button id="send-message-button" class="sendMessageButton text-[#110F0F]/20 bg-[#E0E0E0] dark:text-stone-950/60 dark:bg-white/25 disabled transition rounded-lg p-1.5 self-center" type="submit" disabled="">
+                                                                                <i data-lucide="arrow-up" class="size-4"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        const chatWindow = document.getElementById('chatWindow');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-message-button');
+        const sidebar = document.getElementById('sidebar');
+        const thinkBtn = document.getElementById('think-btn');
+        const webSearchBtn = document.getElementById('web-search-btn');
+
+        let chatHistory = [];
+        let autoThink = true;
+        let webSearch = false;
+
+        // Sidebar Kontrolü
+        function toggleSidebar() {
+            const isCollapsed = sidebar.dataset.collapsed === 'true';
+            sidebar.dataset.collapsed = !isCollapsed;
+            document.getElementById('chat-container').dataset.sidebar = !isCollapsed;
+        }
+
+        // Yeni Sohbet
+        function newChat() {
+            chatHistory = [];
+            chatWindow.innerHTML = '';
+            chatWindow.appendChild(welcomeScreen);
+            welcomeScreen.classList.remove('hidden');
+            chatInput.value = '';
+            sendButton.disabled = true;
+        }
+
+        // Input Boyutu ve Buton Aktifliği
+        chatInput.oninput = () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = chatInput.scrollHeight + 'px';
+            sendButton.disabled = chatInput.value.trim() === '';
+        };
+
+        // Enter ile Gönderme
+        chatInput.onkeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!sendButton.disabled) handleSend();
+            }
+        };
+
+        // Deep Think Toggle
+        thinkBtn.onclick = () => {
+            autoThink = !autoThink;
+            thinkBtn.dataset.autoThink = autoThink;
+            if (autoThink) {
+                thinkBtn.classList.add('text-[#0881F0]', 'bg-[#F0F7FE]', 'dark:bg-white/10', 'dark:text-white');
+                thinkBtn.classList.remove('hover:bg-black/5', 'dark:hover:bg-white/5');
+            } else {
+                thinkBtn.classList.remove('text-[#0881F0]', 'bg-[#F0F7FE]', 'dark:bg-white/10', 'dark:text-white');
+                thinkBtn.classList.add('hover:bg-black/5', 'dark:hover:bg-white/5');
+            }
+        };
+
+        // Web Search Toggle
+        webSearchBtn.onclick = () => {
+            webSearch = !webSearch;
+            if (webSearch) {
+                webSearchBtn.querySelector('button').classList.add('bg-blue-100', 'dark:bg-blue-900');
+            } else {
+                webSearchBtn.querySelector('button').classList.remove('bg-blue-100', 'dark:bg-blue-900');
+            }
+        };
+
+        // Form Submit
+        document.querySelector('form').onsubmit = (e) => {
+            e.preventDefault();
+            if (!sendButton.disabled) handleSend();
+        };
+
+        async function handleSend() {
+            const prompt = chatInput.value.trim();
+            if (!prompt) return;
+
+            welcomeScreen.classList.add('hidden');
+            
+            // Kullanıcı Mesajını Ekle
+            appendMessage('user', prompt);
+            
+            // Hazırlıklar
+            chatInput.value = '';
+            chatInput.style.height = 'auto';
+            sendButton.disabled = true;
+
+            // AI Yanıtı Bekleniyor Balonu
+            const aiMsgId = 'ai-' + Date.now();
+            appendMessage('ai', `<span class="dot">.</span><span class="dot" style="animation-delay:0.2s">.</span><span class="dot" style="animation-delay:0.4s">.</span>`, aiMsgId);
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: prompt, 
+                        history: chatHistory,
+                        autoThink: autoThink,
+                        webSearch: webSearch
+                    })
+                });
+
+                const data = await response.json();
+                const aiBubble = document.getElementById(aiMsgId);
+                
+                if (data.reply) {
+                    // HTML tag'lerini koruyarak (kod blokları için) içeriği bas
+                    aiBubble.innerHTML = formatAIResponse(data.reply);
+                    chatHistory.push({ role: 'user', content: prompt });
+                    chatHistory.push({ role: 'assistant', content: data.reply });
+                } else {
+                    aiBubble.innerText = "Hata: " + (data.error || "Sunucu cevabı boş.");
+                }
+
+            } catch (err) {
+                document.getElementById(aiMsgId).innerText = "İletişim koptu. Backend'i ve internetini kontrol et G63.";
+            } finally {
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        }
+
+        function appendMessage(role, text, id = null) {
+            const div = document.createElement('div');
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} message-fade`;
+            
+            const inner = document.createElement('div');
+            inner.id = id;
+            inner.className = `max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                role === 'user' 
+                ? 'bg-blue-600 text-white rounded-br-none' 
+                : 'bg-[#f4f4f4] text-stone-900 rounded-bl-none border border-black/5 dark:bg-[#2a2a2a] dark:text-white'
+            }`;
+            inner.innerHTML = text;
+            
+            div.appendChild(inner);
+            chatWindow.appendChild(div);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        // Basit Markdown/Kod Bloğu Formatlayıcı
+        function formatAIResponse(text) {
+            return text
+                .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Initialize
+        thinkBtn.dataset.autoThink = autoThink;
+    </script>
+</body>
+</html>

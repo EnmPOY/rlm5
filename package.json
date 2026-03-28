@@ -1,0 +1,27 @@
+{
+  "name": "rlm-5-ai-assistant",
+  "version": "1.0.0",
+  "description": "RLM 5 - G63 AI Assistant powered by GLM-4-9B",
+  "main": "index.html",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "vercel dev",
+    "build": "echo 'No build step needed'"
+  },
+  "keywords": [
+    "ai",
+    "chatbot",
+    "rlm-5",
+    "g63",
+    "assistant",
+    "huggingface"
+  ],
+  "author": "G63",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "vercel": "^28.4.8"
+  }
+}
