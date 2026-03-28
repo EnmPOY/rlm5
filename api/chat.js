@@ -409,53 +409,162 @@ function formatDate(dateStr) {
 async function analyzeWebsiteCode(url) {
     console.log('KOD ANALIZ:', url);
     
+    let html = '';
+    let bypassed = false;
+    
+    // YONTEM 1: Normal erisim
     try {
         const response = await fetch(url, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml',
-                'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
+                'Accept-Encoding': 'gzip, deflate, br',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
+                'Sec-Ch-Ua': '"Chromium";v="123", "Not:A-Brand";v="99"',
+                'Sec-Ch-Ua-Mobile': '?0',
+                'Sec-Ch-Ua-Platform': '"Windows"',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1'
             },
-            signal: AbortSignal.timeout(15000)
+            signal: AbortSignal.timeout(10000)
         });
         
-        if (!response.ok) {
-            return `HATA: Siteye erisilemedi (${response.status})\nURL: ${url}`;
+        if (response.ok) {
+            html = await response.text();
+            // Cloudflare sayfasi mi kontrol et
+            if (!html.includes('<!DOCTYPE html') && !html.includes('<html')) {
+                html = '';
+            }
         }
-        
-        const html = await response.text();
-        const rawHtml = html;
-        
-        let report = '';
-        report += '═══════════════════════════════════════════\n';
-        report += `SITE: ${url}\n`;
-        report += '═══════════════════════════════════════════\n\n';
-        
-        // 1. HTML ANALIZI
-        report += '📄 HTML YAPISI:\n';
-        report += '───────────────────────────────────────────\n';
-        
-        const doctype = html.match(/<!DOCTYPE[^>]*>/i)?.[0] || 'Bulunamadi';
-        const htmlVersion = html.match(/<html[^>]*>/i)?.[0] || '';
-        const lang = html.match(/<html[^>]*lang="([^"]+)"/i)?.[1] || 'Belirtilmemis';
-        const charset = html.match(/<meta[^>]*charset="([^"]+)"/i)?.[1] || 
-                        html.match(/<meta[^>]*charset='([^']+)'/i)?.[1] || 'UTF-8';
-        
-        report += `Doctype: ${cleanHtml(doctype)}\n`;
-        report += `HTML: ${cleanHtml(htmlVersion)}\n`;
-        report += `Dil: ${lang}\n`;
-        report += `Karakter: ${charset}\n`;
-        
-        // Heading analysis
-        const h1s = [...html.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi)].map(m => cleanHtml(m[1]));
-        const h2s = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi)].map(m => cleanHtml(m[1]));
-        const h3s = [...html.matchAll(/<h3[^>]*>([^<]+)<\/h3>/gi)].map(m => cleanHtml(m[1]));
-        const h4s = [...html.matchAll(/<h4[^>]*>([^<]+)<\/h4>/gi)].map(m => cleanHtml(m[1]));
-        
-        report += `\nBasliklar:\n`;
-        report += `  H1 (${h1s.length}): ${h1s.slice(0, 3).join(', ') || 'Yok'}\n`;
-        report += `  H2 (${h2s.length}): ${h2s.slice(0, 3).join(', ') || 'Yok'}\n`;
-        report += `  H3 (${h3s.length}): ${h3s.slice(0, 3).join(', ') || 'Yok'}\n`;
+    } catch (e) {
+        console.log('Method 1 failed:', e.message);
+    }
+    
+    // YONTEM 2: Google Cache
+    if (!html || html.length < 500) {
+        try {
+            const cacheUrl = `https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
+            const response = await fetch(cacheUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                    'Accept': 'text/html'
+                },
+                signal: AbortSignal.timeout(8000)
+            });
+            if (response.ok) {
+                const cacheHtml = await response.text();
+                if (cacheHtml.includes('<!DOCTYPE') || cacheHtml.includes('<html')) {
+                    html = cacheHtml;
+                    bypassed = true;
+                }
+            }
+        } catch (e) {
+            console.log('Google cache failed:', e.message);
+        }
+    }
+    
+    // YONTEM 3: Wayback Machine
+    if (!html || html.length < 500) {
+        try {
+            const waybackUrl = `https://web.archive.org/web/${Date.now()}/${url}`;
+            const response = await fetch(waybackUrl, {
+                headers: {
+                    'User-Agent': 'Mozilla/5.0'
+                },
+                signal: AbortSignal.timeout(8000)
+            });
+            if (response.ok) {
+                const waybackHtml = await response.text();
+                if (waybackHtml.includes('<!DOCTYPE') || waybackHtml.includes('<html')) {
+                    html = waybackHtml;
+                    bypassed = true;
+                }
+            }
+        } catch (e) {
+            console.log('Wayback failed:', e.message);
+        }
+    }
+    
+    // YONTEM 4: textise dot iitty (metin versiyonu)
+    if (!html || html.length < 500) {
+        try {
+            const textiseUrl = `https://lite.textise dot iitty.com/?url=${encodeURIComponent(url)}`;
+            const response = await fetch(textiseUrl.replace(' dot ', '.'), {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                signal: AbortSignal.timeout(6000)
+            });
+            if (response.ok) {
+                const textHtml = await response.text();
+                if (textHtml.length > 200) {
+                    html = `<html><body><pre>${textHtml}</pre></body></html>`;
+                    bypassed = true;
+                }
+            }
+        } catch (e) {
+            console.log('Textise failed:', e.message);
+        }
+    }
+    
+    // YONTEM 5: textise dot ph
+    if (!html || html.length < 500) {
+        try {
+            const textiseUrl = `https://textise dot ph/?url=${encodeURIComponent(url)}`;
+            const response = await fetch(textiseUrl.replace(' dot ', '.'), {
+                headers: { 'User-Agent': 'Mozilla/5.0' },
+                signal: AbortSignal.timeout(6000)
+            });
+            if (response.ok) {
+                const textHtml = await response.text();
+                if (textHtml.length > 200) {
+                    html = `<html><body><pre>${textHtml}</pre></body></html>`;
+                    bypassed = true;
+                }
+            }
+        } catch (e) {
+            console.log('Textise.ph failed:', e.message);
+        }
+    }
+    
+    if (!html || html.length < 500) {
+        return `CLOUDFLARE KORUMASI: Site korumaya alinmis, direkt erisilemiyor.\n\nYAPILAN DENEMELER:\n- Normal erisim\n- Google Cache\n- Wayback Machine\n\nSite: ${url}\n\nONERILER:\n1. Siteyi manuel tarayicida ac ve icerigi paylas\n2. Wayback Machine'dan bak: https://web.archive.org/web/*/${url.replace('https://', '')}\n3. Google Cache'den bak: https://webcache.googleusercontent.com/search?q=cache:${encodeURIComponent(url)}`;
+    }
+    
+    let report = '';
+    report += '═══════════════════════════════════════════\n';
+    report += `SITE: ${url}\n`;
+    if (bypassed) report += `(Cloudflare atlatildi - cache)\n`;
+    report += '═══════════════════════════════════════════\n\n';
+    
+    // 1. HTML ANALIZI
+    report += 'HTML YAPISI:\n';
+    report += '───────────────────────────────────────────\n';
+    
+    const doctype = html.match(/<!DOCTYPE[^>]*>/i)?.[0] || 'Bulunamadi';
+    const htmlVersion = html.match(/<html[^>]*>/i)?.[0] || '';
+    const lang = html.match(/<html[^>]*lang="([^"]+)"/i)?.[1] || 
+                 html.match(/<html[^>]*xml:lang="([^"]+)"/i)?.[1] || 'Belirtilmemis';
+    const charset = html.match(/<meta[^>]*charset="([^"]+)"/i)?.[1] || 
+                    html.match(/<meta[^>]*charset='([^']+)'/i)?.[1] || 'UTF-8';
+    
+    report += `Doctype: ${cleanHtml(doctype)}\n`;
+    report += `Dil: ${lang}\n`;
+    report += `Karakter: ${charset}\n`;
+    
+    // Heading analysis
+    const h1s = [...html.matchAll(/<h1[^>]*>([^<]+)<\/h1>/gi)].map(m => cleanHtml(m[1]));
+    const h2s = [...html.matchAll(/<h2[^>]*>([^<]+)<\/h2>/gi)].map(m => cleanHtml(m[1]));
+    const h3s = [...html.matchAll(/<h3[^>]*>([^<]+)<\/h3>/gi)].map(m => cleanHtml(m[1]));
+    const h4s = [...html.matchAll(/<h4[^>]*>([^<]+)<\/h4>/gi)].map(m => cleanHtml(m[1]));
+    
+    report += `\nBasliklar:\n`;
+    report += `  H1 (${h1s.length}): ${h1s.slice(0, 3).join(', ') || 'Yok'}\n`;
+    report += `  H2 (${h2s.length}): ${h2s.slice(0, 3).join(', ') || 'Yok'}\n`;
+    report += `  H3 (${h3s.length}): ${h3s.slice(0, 3).join(', ') || 'Yok'}\n`;
         report += `  H4 (${h4s.length}): ${h4s.slice(0, 2).join(', ') || 'Yok'}\n`;
         
         // Semantic tags
