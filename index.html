@@ -203,7 +203,7 @@
                         <i data-lucide="arrow-up" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <p class="text-center text-xs text-gray-400 mt-3">RLM 5, G63 tarafından ❤️ ile geliştirildi</p>
+                <p class="text-center text-xs text-gray-400 dark:text-gray-500 mt-3">RLM 5 ❤️</p>
             </div>
         </div>
     </main>
@@ -384,16 +384,13 @@
             scroll();
 
             try {
-                console.log('Sending request to /api/chat...');
                 const res = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: text, history, autoThink: think })
                 });
                 const data = await res.json();
-                console.log('Response:', data);
                 const el = document.getElementById(mid);
-                console.log('Element:', el);
                 
                 if (el) {
                     if (data.reply) {
@@ -408,9 +405,8 @@
             } catch (err) {
                 const el = document.getElementById(mid);
                 if (el) {
-                    el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası: ' + (err.message || 'Bilinmeyen hata') + '</p>';
+                    el.innerHTML = '<p class="text-red-500 text-sm">Bağlantı hatası</p>';
                 }
-                console.error('Fetch error:', err);
             }
 
             generating = false;
@@ -443,15 +439,17 @@
         // Format
         function format(text) {
             let html = text
-                .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-                .replace(/`([^`]+)`/g, '<code>$1</code>')
+                .replace(/```(\w*)\n?([\s\S]*?)```/g, '<pre class="bg-[#1a1a2e] text-[#e4e4e7] p-4 rounded-xl overflow-x-auto my-2"><code>$2</code></pre>')
+                .replace(/`([^`]+)`/g, '<code class="bg-[#e5e7eb] dark:bg-[#374151] px-1.5 py-0.5 rounded text-sm">$1</code>')
                 .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
                 .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-                .replace(/^# (.+)$/gm, '<h2 class="text-lg font-bold mt-4 mb-2">$1</h2>')
-                .replace(/^## (.+)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>')
-                .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+                .replace(/^### (.+)$/gm, '<h3 class="text-base font-semibold mt-3 mb-1">$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2 class="text-lg font-semibold mt-4 mb-2">$1</h2>')
+                .replace(/^# (.+)$/gm, '<h1 class="text-xl font-bold mt-4 mb-2">$1</h1>')
+                .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc my-1">$1</li>')
+                .replace(/\n\n/g, '</p><p class="mt-2">')
                 .replace(/\n/g, '<br>');
-            return `<p class="text-sm leading-relaxed">${html}</p>`;
+            return `<div class="text-sm leading-relaxed text-gray-800 dark:text-gray-200"><p>${html}</p></div>`;
         }
 
         // Escape
